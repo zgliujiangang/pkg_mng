@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block page_header %}
+<h3 class="page-header">IOT安装包更新系统> 管理员</h3>
+{% for msg in get_flashed_messages() %}
+	<div class="alert alert-danger" role="alert">{{ msg }}</div>
+{% endfor %}
+{% endblock %}
+
+{% block search_form %}
+<div>
+	<form class="form-inline search-form" role="form" method="get">
+	  <div class="form-group">
+	    <div class="input-group">
+	      <div class="input-group-addon">账号</div>
+	      <input class="form-control" type="text" placeholder="请输入账号" name="username" value="{{ request.args.username }}" />
+	    </div>
+	  </div>
+	  <input type="hidden" name="page" id="page" />
+	  <button type="submit" class="btn btn-primary">搜索</button>
+	  <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#userAddModal">增加</button>
+	</form>
+</div>
+{% endblock %}
+
+{% block table %}
+<div class="table-responsive">
+	<table class="table table-striped">
+	  <thead>
+	    <tr>
+	      <th>账号</th>
+	      <th>创建时间</th>
+	      <th>修改时间</th>
+	      <th>修改</th>
+	      <th>删除</th>
+	    </tr>
+	  </thead>
+	  <tbody>
+	  	{% for user in user_list %}
+	  	<tr>
+	  		<td>{{ user.name }}</td>
+	  		<td>{{ user.create_time }}</td>
+	  		<td>{{ user.update_time }}</td>
+	  		<td><a href="#userUpdateModal" data-toggle="modal" data-name="{{ user.name }}" data-id="{{ user.id }}">修改</a></td>
+	  		<td><a href="javascript:void(0);" class="userDelete" data-id="{{ user.id }}">删除</a></td>
+	  	</tr>
+	  	{% endfor %}
+	  </tbody>
+	</table>
+	<div class="tcdPageCode"></div>
+</div>
+{% endblock %}
+
+{% block modal %}
+<div class="modal fade" id="userAddModal" tabindex="-1" role="dialog" aria-labelledby="userAddModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-sm">
+    <div class="modal-content">
+    	<form class="form-horizontal" role="form" id="userAddForm" action="{{ url_for('user_add') }}" method="post">
+	    	<div class="modal-header">
+	    		<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+	        	<h4 class="modal-title" id="userAddModalLabel">添加用户</h4>
+	    	</div>
+	    	<div class="modal-body">
+	    		<div class="form-group">
+	    			<label for="userAddName" class="col-sm-3 control-label">账号：</label>
+	    			<div class="col-sm-7">
+	    				<input name="username" id="userAddName" placeholder="账号" class="form-control" required="required" />
+	    			</div>
+	    		</div>
+	    		<div class="form-group">
+	    			<label for="userAddPwd" class="col-sm-3 control-label">密码：</label>
+	    			<div class="col-sm-7">
+	    				<input type="password" name="password" id="userAddPwd" placeholder="密码" class="form-control" required="required" />
+	    			</div>
+	    		</div>
+	    	</div>
+	    	<div class="modal-footer">
+	    		<button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+	        	<button type="submit" class="btn btn-primary">添加</button>
+	    	</div>
+	    </form>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="userUpdateModal" tabindex="-1" role="dialog" aria-labelledby="userUpdateModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-sm">
+    <div class="modal-content">
+    	<form class="form-horizontal" role="form" id="userUpdateForm" action="{{ url_for('user_add') }}" method="post">
+	    	<div class="modal-header">
+	    		<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+	        	<h4 class="modal-title" id="userUpdateModalLabel">修改账号</h4>
+	    	</div>
+	    	<div class="modal-body">
+	    		<div class="form-group">
+	    			<label for="userUpdateName" class="col-sm-3 control-label">账号：</label>
+	    			<div class="col-sm-7">
+	    				<input name="username" class="form-control" id="userUpdateName" placeholder="账号" required="required" />
+	    			</div>
+	    		</div>
+	    		<div class="form-group">
+	    			<label for="userUpdatePwd" class="col-sm-3 control-label">密码：</label>
+	    			<div class="col-sm-7">
+	    				<input type="password" name="password" class="form-control" id="userUpdatePwd" placeholder="密码" required="required" />
+	    			</div>
+	    		</div>
+	    		<input type="hidden" name="user_id" id="userId" />
+	    	</div>
+	    	<div class="modal-footer">
+	    		<button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+	        	<button type="submit" class="btn btn-primary">修改</button>
+	    	</div>
+	    </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="text/javascript">
+	$(".tcdPageCode").createPage({
+		pageCount: {{ page_count }},
+		current: {{ page }},
+		backFn: function(page){
+			console.log(page);
+			$("#page").val(page);
+			$(".search-form").submit();
+		}
+	});
+	$("#userBlock").addClass("active");
+	// 修改用户
+	$("#userUpdateModal").on("show.bs.modal", function(e){
+		var target = $(e.relatedTarget);
+		$("#userUpdateName").val(target.data("name"));
+		$("#userId").val(target.data("id"));
+	});
+	// 删除用户
+	$(".userDelete").on("click", function(){
+		if(confirm("确定要删除吗？")){
+			var url = "{{ url_for('user_delete') }}" + "?user_id=" + $(this).data("id");
+			window.location.href = url;
+		}else{
+			return;
+		}
+	});
+</script>
+{% endblock %}

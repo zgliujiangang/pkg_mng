@@ -1,4 +1,4 @@
 *.db
-*.pyc
+*.py[cod]
 my.ini
 /package/

@@ -10,7 +10,7 @@
         5. `python manage.py runserver` 本地启项目
         6. 浏览器访问 127.0.0.1:5000
         7. 更多功能可查看manage.py
-        8. test.ini以及production.ini里的配置内容不能随意修改,必须创建本机的配置文件my.ini
+        8. test.ini以及production.ini里的配置内容不能随意修改,若未创建本机的配置文件my.ini，则默认以test.ini启动
 ### 正式环境运行
         1. 参考上面1-5点
         2. 将requirements.txt中gunicorn和gevent的注释取消

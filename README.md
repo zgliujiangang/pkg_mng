@@ -5,13 +5,12 @@
 ### 本地初次运行
         1. `pip install -r requirements.txt` 安装项目用到的第三方包
         2. 在conf目录下创建my.ini，将test.ini里面的配置拷贝到my.ini，pkg_path需要根据本地环境修改
-        3. `python manage.py addnode my.ini`
-        4. `python manage.py initdb` 初始化数据库
-        5. `python manage.py createuser -u my_name -p my_password` 创建一个后台用户
-        6. `python manage.py runserver` 本地启项目
-        7. 浏览器访问 127.0.0.1:5000
-        8. 更多功能可查看manage.py
-        9. test.ini以及production.ini里的配置内容不能随意修改
+        3. `python manage.py initdb` 初始化数据库
+        4. `python manage.py createuser -u my_name -p my_password` 创建一个后台用户
+        5. `python manage.py runserver` 本地启项目
+        6. 浏览器访问 127.0.0.1:5000
+        7. 更多功能可查看manage.py
+        8. test.ini以及production.ini里的配置内容不能随意修改,必须创建本机的配置文件my.ini
 ### 正式环境运行
         1. 参考上面1-5点
         2. 将requirements.txt中gunicorn和gevent的注释取消

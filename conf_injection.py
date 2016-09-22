@@ -1,7 +1,7 @@
 # /usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import platform
+
 import ConfigParser
 import os
 
@@ -24,9 +24,9 @@ def save_config(file_name, config):
 
 
 def init_config():
-    user_file = "users.ini"
-    user_config = read_config(user_file)
-    current_user = platform.node()
-    init_file = user_config.get("users", current_user)
-    config = read_config(init_file)
-    return config
+    try:
+        config = read_config("my.ini")
+    except IOError:
+        config = read_config("test.ini")
+    finally:
+        return config

@@ -2,3 +2,10 @@
 *.py[cod]
 my.ini
 /package/
+
+# ignore local config file
+project.ini
+gunicorn.py
+uwsgi.ini
+supervisord.conf
+nginx.conf

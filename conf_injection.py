@@ -15,18 +15,6 @@ def read_config(file_name):
     return config
 
 
-def save_config(file_name, config):
-    config_path = os.path.join(os.path.dirname(__file__), "conf")
-    file_name = os.path.join(config_path, file_name)
-    with open(file_name, "wb") as f:
-        config.write(f)
-    return config
-
-
 def init_config():
-    try:
-        config = read_config("my.ini")
-    except IOError:
-        config = read_config("test.ini")
-    finally:
-        return config
+    config = read_config("project.ini")
+    return config

@@ -10,6 +10,7 @@ from flask import render_template
 from flask import redirect
 from flask import flash
 from flask import url_for
+from flask import make_response
 from models.proj import Project
 from models.pkg import Package
 from _global import db, app, config
@@ -100,6 +101,8 @@ def proj_latest_download(proj_name):
 	pkg_name = pkg.name
 	abs_path = os.path.join(config.get("flask", "pkg_path"), pkg_name)
 	try:
-		return send_file(abs_path)
+		response = make_response(send_file(abs_path))
+		response.headers["Content-Disposition"] = "attachment; filename=%s;" % pkg_name
+		return response
 	except Exception:
 		abort(404)

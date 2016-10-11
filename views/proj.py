@@ -91,13 +91,13 @@ def proj_delete():
 
 def proj_latest_msg(proj_name):
 	project = Project.query.filter_by(name=proj_name).first_or_404()
-	pkg = project.pkgs.filter_by(public_status=Package.public_on).order_by(Package.version.desc()).first_or_404()
+	pkg = project.pkgs.filter_by(public_status=Package.public_on).order_by(Package.version_code.desc()).first_or_404()
 	return pkg.to_json()
 
 
 def proj_latest_download(proj_name):
 	project = Project.query.filter_by(name=proj_name).first_or_404()
-	pkg = project.pkgs.filter_by(public_status=Package.public_on).order_by(Package.version.desc()).first_or_404()
+	pkg = project.pkgs.filter_by(public_status=Package.public_on).order_by(Package.version_code.desc()).first_or_404()
 	pkg_name = pkg.name
 	abs_path = os.path.join(config.get("flask", "pkg_path"), pkg_name)
 	try:

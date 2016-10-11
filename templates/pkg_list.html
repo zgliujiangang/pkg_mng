@@ -24,8 +24,14 @@
 	  </div>
 	  <div class="form-group">
 	    <div class="input-group">
+	      <div class="input-group-addon">版本名称</div>
+	      <input class="form-control" type="text" placeholder="请输入版本名称" name="version_name" value="{{ request.args.version_name }}" />
+	    </div>
+	  </div>
+	  <div class="form-group">
+	    <div class="input-group">
 	      <div class="input-group-addon">版本号</div>
-	      <input class="form-control" type="text" placeholder="请输入版本号" name="version" value="{{ request.args.version }}" />
+	      <input class="form-control" type="text" placeholder="请输入版本号" name="version_code" value="{{ request.args.version_code }}" />
 	    </div>
 	  </div>
 	  <div class="form-group">
@@ -48,7 +54,8 @@
 	    <tr>
 	      <th>编号</th>
 	      <th>类型</th>
-	      <th>版本</th>
+	      <th>版本名称</th>
+	      <th>版本号</th>
 	      <th>状态</th>
 	      <th>强制更新</th>
 	      <th>更新内容</th>
@@ -63,7 +70,8 @@
 	  	<tr>
 	  		<td>{{ package.id }}</td>
 	  		<td>{{ package.project.name }}</td>
-	  		<td>{{ package.version }}</td>
+	  		<td>{{ package.version_name }}</td>
+	  		<td>{{ package.version_code }}</td>
 	  		<td>{{ pkg_cls.PUBLIC_STATUS.get(package.public_status) }}</td>
 	  		<td>{{ pkg_cls.UPDATE_LEVEL.get(package.update_level) }}</td>
 	  		<td>{{ package.update_content }}</td>
@@ -99,9 +107,15 @@
 	      </div>
 	      <div class="modal-body">
 			  <div class="form-group">
-			    <label for="pkgAddVersion" class="col-sm-2 control-label">版本号</label>
+			    <label for="pkgAddVersionName" class="col-sm-2 control-label">版本名称</label>
 			    <div class="col-sm-8">
-			      <input type="text" name="version" class="form-control" id="pkgAddVersion" placeholder="版本号" required="required" />
+			      <input type="text" name="version_name" class="form-control" id="pkgAddVersionName" placeholder="版本名称" required="required" />
+			    </div>
+			  </div>
+			  <div class="form-group">
+			    <label for="pkgAddVersionCode" class="col-sm-2 control-label">版本号</label>
+			    <div class="col-sm-8">
+			      <input type="number" name="version_code" class="form-control" id="pkgAddVersionCode" placeholder="版本号" required="required" />
 			    </div>
 			  </div>
 			  <div class="form-group">
@@ -157,9 +171,15 @@
 	      </div>
 	      <div class="modal-body">
 			  <div class="form-group">
-			    <label for="pkgUpdateVersion" class="col-sm-2 control-label">版本号</label>
+			    <label for="pkgUpdateVersionName" class="col-sm-2 control-label">版本名称</label>
 			    <div class="col-sm-8">
-			      <input type="text" name="version" class="form-control" id="pkgUpdateVersion" placeholder="版本号" required="required" />
+			      <input type="text" name="version_name" class="form-control" id="pkgUpdateVersionName" placeholder="版本名称" required="required" />
+			    </div>
+			  </div>
+			  <div class="form-group">
+			    <label for="pkgUpdateVersionCode" class="col-sm-2 control-label">版本号</label>
+			    <div class="col-sm-8">
+			      <input type="text" name="version_code" class="form-control" id="pkgUpdateVersionCode" placeholder="版本号" required="required" />
 			    </div>
 			  </div>
 			  <div class="form-group">
@@ -227,7 +247,8 @@
 			data: {pkg_id: $(e.relatedTarget).data("id")},
 			success: function(data){
 				//渲染数据
-				$("#pkgUpdateVersion").val(data.version);
+				$("#pkgUpdateVersionName").val(data.version_name);
+				$("#pkgUpdateVersionCode").val(data.version_code);
 				$("#pkgUpdateProject").val(data.proj_id);
 				$("#pkgUpdateUpdateLevel").val(data.update_level);
 				$("#pkgUpdateUpateCotent").val(data.update_content);

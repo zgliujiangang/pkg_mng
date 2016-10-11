@@ -22,7 +22,8 @@ class Package(db.Model):
 
 	id = db.Column(db.Integer, primary_key=True)
 	name = db.Column(db.String(20), nullable=False, unique=True)
-	version = db.Column(db.String(20), nullable=False)
+	version_name = db.Column(db.String(20), nullable=False)
+	version_code = db.Column(db.Integer, index=True)
 	project_id = db.Column(db.Integer, db.ForeignKey("pkg_project.id"), nullable=False)
 	project = db.relationship("Project", backref=db.backref("pkgs", lazy="dynamic"))
 	public_status = db.Column(db.Integer, default=public_off)
@@ -33,25 +34,26 @@ class Package(db.Model):
 	
 	__table_args__ = (
 		# 相同项目一个版本只能有一条记录
-		db.UniqueConstraint("project_id", "version", name="unique_proj_version"),
+		db.UniqueConstraint("project_id", "version_code", name="unique_proj_version"),
 		)
 	
-	def __init__(self, name, version, project_id, public_status=public_off, update_level=update_free, update_content=None):
+	def __init__(self, name, version_name, version_code, project_id, public_status=public_off, update_level=update_free, update_content=None):
 		self.name = name
-		self.version = version
+		self.version_name = version_name
+		self.version_code = version_code
 		self.project_id = project_id
 		self.public_status = public_status
 		self.update_level=update_level
 		self.update_content = update_content
 
 	def __str__(self):
-		return self.project.name + self.version
+		return self.project.name + self.version_name
 
 	def to_json(self):
-		data = {"name": self.name, "version": self.version, "proj_name": self.project.name, 
+		data = {"name": self.name, "version_name": self.version_name, "version_code": self.version_code, "proj_name": self.project.name, 
 		"proj_id": self.project_id, "public_status": self.public_status, "update_level": 
 		self.update_level, "update_content": self.update_content, "id": self.id, 
-		"url": url_for("pkg_download", pkg_name=self.name, _external=True)}
+		"download_url": url_for("pkg_download", pkg_name=self.name, _external=True)}
 		return json.dumps(data)
 
 

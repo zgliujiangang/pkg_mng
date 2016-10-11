@@ -31,10 +31,12 @@ def pkg_index():
 	pkg_query = Package.query.order_by(Package.id.desc())
 	if request.args.get("proj_id"):
 		pkg_query = pkg_query.filter_by(project_id=request.args.get("proj_id"))
-	if request.args.get("version"):
-		pkg_query = pkg_query.filter(Package.version.ilike("%" + request.args.get("version") + "%"))
+	if request.args.get("version_name"):
+		pkg_query = pkg_query.filter(Package.version_name.ilike("%" + request.args.get("version_name") + "%"))
+	if request.args.get("version_code"):
+		pkg_query = pkg_query.filter_by(version_code=request.args.get("version_code"))
 	if request.args.get("name"):
-		pkg_query = pkg_query.filter(Package.name.ilike("%" + request.args.get("version") + "%"))
+		pkg_query = pkg_query.filter(Package.name.ilike("%" + request.args.get("name") + "%"))
 	pkg_list = pkg_query.offset(offset).limit(limit).all()
 	pkg_count = pkg_query.count()
 	page_count = pkg_count / per_page + 1 if pkg_count % per_page else pkg_count / per_page
@@ -52,14 +54,17 @@ def pkg_add():
 		origin_path = os.path.join(config.get("flask", "pkg_path"), package.name)
 		pkg_update = {}
 		pkg_file = request.files.get("pkg_file")
-		version = request.form.get("version")
+		version_name = request.form.get("version_name")
+		version_code = request.form.get("version_code")
 		proj_id = request.form.get("proj_id")
 		update_level = request.form.get("update_level")
 		update_content = request.form.get("update_content")
 		if pkg_file:
 			pkg_update[Package.name] = pkg_file.filename
-		if version:
-			pkg_update[Package.version] = version
+		if version_name:
+			pkg_update[Package.version_name] = version_name
+		if version_code:
+			pkg_update[Package.version_code] = version_code
 		if proj_id:
 			pkg_update[Package.project_id] = proj_id
 		if update_level:
@@ -85,11 +90,12 @@ def pkg_add():
 		# 新增
 		pkg_file = request.files.get("pkg_file")
 		name = pkg_file.filename
-		version = request.form.get("version")
+		version_name = request.form.get("version_name")
+		version_code = request.form.get("version_code")
 		proj_id = request.form.get("proj_id")
 		update_level = request.form.get("update_level")
 		update_content = request.form.get("update_content")
-		package = Package(name, version, proj_id, Package.public_off, update_level, update_content)
+		package = Package(name, version_name, version_code, proj_id, Package.public_off, update_level, update_content)
 		abs_path = os.path.join(config.get("flask", "pkg_path"), name)
 		if os.path.exists(abs_path):
 			flash("文件名冲突，请修改文件名后再上传，添加更新包失败")

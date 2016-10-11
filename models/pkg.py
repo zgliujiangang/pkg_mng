@@ -5,6 +5,7 @@
 import json
 from datetime import datetime
 from _global import db
+from flask import url_for
 
 
 class Package(db.Model):
@@ -49,7 +50,8 @@ class Package(db.Model):
 	def to_json(self):
 		data = {"name": self.name, "version": self.version, "proj_name": self.project.name, 
 		"proj_id": self.project_id, "public_status": self.public_status, "update_level": 
-		self.update_level, "update_content": self.update_content, "id": self.id}
+		self.update_level, "update_content": self.update_content, "id": self.id, 
+		"url": url_for("pkg_download", pkg_name=self.name, _external=True)}
 		return json.dumps(data)
 
 

@@ -4,7 +4,7 @@
         flask+sqlalchemy
 ### 本地初次运行
         1. `pip install -r requirements.txt` 安装项目用到的第三方包
-        2. 在conf目录下创建my.ini，将test.ini里面的配置拷贝到my.ini，pkg_path需要根据本地环境修改
+        2. cp project.ini.sample project.ini，pkg_path需要根据本地环境修改
         3. `python manage.py initdb` 初始化数据库
         4. `python manage.py createuser -u my_name -p my_password` 创建一个后台用户
         5. `python manage.py runserver` 本地启项目

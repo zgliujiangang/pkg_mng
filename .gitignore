@@ -1,6 +1,5 @@
 *.db
 *.py[cod]
-my.ini
 /package/
 
 # ignore local config file

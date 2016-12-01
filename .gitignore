@@ -1,10 +1,6 @@
 *.db
 *.py[cod]
 /package/
-
-# ignore local config file
+/cache_dir/
+/data/
 project.ini
-gunicorn.py
-uwsgi.ini
-supervisord.conf
-nginx.conf

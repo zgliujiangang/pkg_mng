@@ -21,7 +21,7 @@ def create_api():
     app = create_app()
     api = Api(app)
     api = swagger.docs(api, apiVersion='1.0',
-                       basePath='http://localhost:5000',
+                       basePath=settings.SWAGGER_BASE_PATH,
                        resourcePath='/',
                        produces=['text/html'],
                        api_spec_url='/api/doc',

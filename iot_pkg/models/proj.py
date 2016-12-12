@@ -1,24 +1,69 @@
-# /usr/bin/env python
 # -*- coding: utf-8 -*-
 
 
-from datetime import datetime
-from _global import db
+import uuid
+from flask import url_for
+from datetime import datetime, date
+from iot_pkg.core import create_db
+from iot_pkg.models.counter import DayCounter
+
+
+db = create_db()
 
 
 class Project(db.Model):
 
-	__tablename__ = "pkg_project"
+    __tablename__ = "pkg_project"
 
-	id = db.Column(db.Integer, primary_key=True)
-	name = db.Column(db.String(20), index=True, unique=True, nullable=False)
-	owner_id = None
-	owner = None
-	create_time = db.Column(db.DateTime, default=datetime.now)
-	update_time = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
-	
-	def __init__(self, name):
-		self.name = name
+    Windows = 1
+    Mac = 2
+    Android = 3
+    IOS = 4
+    PLATFORM = {Windows: "Windows", Mac: "Mac", Android: "Android", IOS: "IOS"}
 
-	def __str__(self):
-		return self.name
+    NOT_AUTO_PUBLISH = 0
+    AUTO_PUBLISH = 1
+    IS_AUTO_PUBLISH = {AUTO_PUBLISH: "自动发布", NOT_AUTO_PUBLISH: "手动发布"}
+
+    id = db.Column(db.Integer, primary_key=True)
+    uid = db.Column(db.String(50), unique=True, default=lambda:str(uuid.uuid4()), nullable=False)
+    name = db.Column(db.String(20), nullable=False)
+    owner_id = db.Column(db.Integer, db.ForeignKey("pkg_user.id"), nullable=False)
+    owner = db.relationship("User", backref=db.backref("projects", lazy="dynamic"))
+    platform = db.Column(db.Integer, nullable=True)
+    logo = db.Column(db.String(50), nullable=True)
+    is_auto_publish = db.Column(db.Integer, nullable=False, default=AUTO_PUBLISH)
+    create_time = db.Column(db.DateTime, default=datetime.now)
+    update_time = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
+
+    __table_args__ = (
+        # 相同项目一个版本只能有一条记录
+        db.UniqueConstraint("owner_id", "name", name="unique_user_project"),
+        )
+
+    def __init__(self, name, owner_id, platform, logo, is_auto_publish):
+        self.name = name
+        self.owner_id = owner_id
+        self.platform = platform
+        self.logo = logo
+        self.is_auto_publish = is_auto_publish
+
+    def __str__(self):
+        return self.name
+
+    def to_dict(self):
+        data = {
+            "id": self.id,
+            "uid": self.uid,
+            "name": self.name,
+            "platform": self.platform,
+            "platform_display": self.PLATFORM.get(self.platform),
+            "logo": self.logo,
+            "auto_publish": self.is_auto_publish,
+            "auto_publish_display": self.IS_AUTO_PUBLISH.get(self.is_auto_publish),
+            "msg_url": url_for("project_msg", uid=self.uid, _external=True),
+            "download_url": url_for("project_download", uid=self.uid, _external=True)
+        }
+        # data["today_download"] = DayCounter.get_counter(self.uid).number
+        # data["total_download"] = DayCounter.get_counters(cid=self.uid).with_entities(db.func.sum(DayCounter.number)).one()[0]
+        return data

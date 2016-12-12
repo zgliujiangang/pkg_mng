@@ -1,179 +1,462 @@
-# /usr/bin/env python
 # -*- coding:utf-8 -*-
 
+
 import json
-import os
-from flask import request
-from flask import render_template
-from flask import redirect
-from flask import url_for
-from flask import flash
+from werkzeug import FileStorage
+from sqlalchemy.exc import IntegrityError
 from flask import send_file
-from flask import abort
-from _global import db, config, app
-from models.pkg import Package
-from models.proj import Project
-from common import login_required
+from flask_restful import request, reqparse, Resource, abort
+from flask_restful_swagger import swagger
+from iot_pkg import settings
+from iot_pkg.core import create_db
+from iot_pkg.contrib.auth import login_required
+from iot_pkg.contrib.file_storage import File
+from iot_pkg.contrib.pkg_parser import pkg_parser
+from iot_pkg.resources.common import page_parser
+from iot_pkg.models.proj import Project
+from iot_pkg.models.counter import DayCounter
+from iot_pkg.models.pkg import Package, PackageDependent
 
 
-@login_required
-def pkg_index():
-	# 程序包首页
-	page = request.args.get("page") or 1
-	per_page = request.args.get("per_page") or 20
-	try:
-		page, per_page = int(page), int(per_page)
-	except ValueError:
-		page, per_page = 1, 20
-	limit = per_page
-	offset = (page - 1) * per_page
-	proj_list = Project.query.all()
-	pkg_query = Package.query.order_by(Package.id.desc())
-	if request.args.get("proj_id"):
-		pkg_query = pkg_query.filter_by(project_id=request.args.get("proj_id"))
-	if request.args.get("version_name"):
-		pkg_query = pkg_query.filter(Package.version_name.ilike("%" + request.args.get("version_name") + "%"))
-	if request.args.get("version_code"):
-		pkg_query = pkg_query.filter_by(version_code=request.args.get("version_code"))
-	if request.args.get("name"):
-		pkg_query = pkg_query.filter(Package.name.ilike("%" + request.args.get("name") + "%"))
-	pkg_list = pkg_query.offset(offset).limit(limit).all()
-	pkg_count = pkg_query.count()
-	page_count = pkg_count / per_page + 1 if pkg_count % per_page else pkg_count / per_page
-	return render_template("pkg_list.html", pkg_list=pkg_list, proj_list=proj_list, 
-		page_count=page_count, page=page, pkg_cls=Package)
+db = create_db()
 
 
-@login_required
-def pkg_add():
-	# 程序包增改
-	pkg_id = request.form.get("pkg_id")
-	if pkg_id:
-		# 修改
-		package = Package.query.filter_by(id=pkg_id).first_or_404()
-		origin_path = os.path.join(config.get("flask", "pkg_path"), package.name)
-		pkg_update = {}
-		pkg_file = request.files.get("pkg_file")
-		version_name = request.form.get("version_name")
-		version_code = request.form.get("version_code")
-		proj_id = request.form.get("proj_id")
-		update_level = request.form.get("update_level")
-		update_content = request.form.get("update_content")
-		if pkg_file:
-			pkg_update[Package.name] = pkg_file.filename
-		if version_name:
-			pkg_update[Package.version_name] = version_name
-		if version_code:
-			pkg_update[Package.version_code] = version_code
-		if proj_id:
-			pkg_update[Package.project_id] = proj_id
-		if update_level:
-			pkg_update[Package.update_level] = update_level
-		if update_content:
-			pkg_update[Package.update_content] = update_content
-		try:
-			Package.query.filter_by(id=pkg_id).update(pkg_update)
-			if pkg_file:
-				abs_path = os.path.join(config.get("flask", "pkg_path"), pkg_file.filename)
-				os.remove(origin_path)
-				pkg_file.save(abs_path)
-			db.session.commit()
-			flash("修改更新包成功")
-		except Exception as e:
-			app.logger.info("修改更新包(%s)失败" % package.name)
-			app.logger.info(str(e))
-			db.session.rollback()
-			flash("修改更新包失败")
-		finally:
-			return redirect(url_for("pkg_index"))
-	else:
-		# 新增
-		pkg_file = request.files.get("pkg_file")
-		name = pkg_file.filename
-		version_name = request.form.get("version_name")
-		version_code = request.form.get("version_code")
-		proj_id = request.form.get("proj_id")
-		update_level = request.form.get("update_level")
-		update_content = request.form.get("update_content")
-		package = Package(name, version_name, version_code, proj_id, Package.public_off, update_level, update_content)
-		abs_path = os.path.join(config.get("flask", "pkg_path"), name)
-		if os.path.exists(abs_path):
-			flash("文件名冲突，请修改文件名后再上传，添加更新包失败")
-		else:
-			pkg_file.save(abs_path)
-			try:
-				db.session.add(package)
-				db.session.commit()
-				flash("添加更新包成功")
-			except Exception as e:
-				app.logger.info("上传更新包失败")
-				app.logger.info(str(e))
-				os.remove(abs_path)
-				db.session.rollback()
-				flash("添加更新包失败")
-		return redirect(url_for("pkg_index"))
+class PackageListAPI(Resource):
+
+    method_decorators = [login_required]
+
+    get_parser = page_parser.copy()
+    get_parser.add_argument("project_id", type=int, required=True)
+
+    @swagger.operation(
+        notes='获取安装包列表',
+        summary='获取安装包列表',
+        nickname='get',
+        parameters=[
+            {
+                "name": settings.USER_SESSION_KEY,
+                "description": "登录凭证",
+                'required': True,
+                'dataType': 'string',
+                'paramType': 'header'
+            },
+            {
+                'name': 'project_id',
+                'description': '项目ID',
+                'required': True,
+                'dataType': 'integer',
+                'paramType': 'query'
+            },
+            {
+                'name': 'page',
+                'description': '页数',
+                'required': False,
+                'dataType': 'integer',
+                'paramType': 'query'
+            },
+            {
+                'name': 'per_page',
+                'description': '每页条数',
+                'required': False,
+                'dataType': 'integer',
+                'paramType': 'query'
+            }
+        ])
+    def get(self):
+        args = self.get_parser.parse_args()
+        project_id = args["project_id"]
+        project = Project.query.filter_by(id=project_id, owner=request.user).first_or_404()
+        project_data = project.to_dict()
+        project_data["today_download"] = DayCounter.get_counter(cid=project.uid).number
+        project_data["total_download"] = DayCounter.get_counters(cid=project.uid).with_entities(db.func.sum(DayCounter.number)).one()[0]
+        packages = project.pkgs.order_by(Package.version_name.desc())
+        paginate = packages.paginate(args["page"], per_page=args["per_page"])
+        data = {
+            "page": paginate.page, 
+            "per_page": paginate.per_page, 
+            "pages": paginate.pages,
+            "total": paginate.total,
+            "project": project_data, 
+            "packages": [package.to_dict() for package in paginate.items]
+        }
+        return {"code": "200", "msg": "获取安装包列表成功", "data": data}
 
 
-@login_required
-def pkg_info():
-	pkg_id = request.form.get("pkg_id") or request.args.get("pkg_id")
-	if not pkg_id:
-		return json.dumps({"status": "error", "err_msg": "缺少参数"})
-	else:
-		package = Package.query.filter_by(id=pkg_id).first()
-		if package is None:
-			return josn.dumps({"status": "error", "err_msg": "不存在的proj_id"})
-		else:
-			return package.to_json()
+class PackageAPI(Resource):
+
+    method_decorators = [login_required]
+
+    get_parser = reqparse.RequestParser()
+    get_parser.add_argument("package_id", type=int, required=True)
+
+    post_parser = reqparse.RequestParser()
+    post_parser.add_argument("project_id", type=int, required=True)
+    post_parser.add_argument("fid", required=True)
+    post_parser.add_argument("version_name", required=True)
+    post_parser.add_argument("build_code", required=True)
+    post_parser.add_argument("update_level", required=False)
+    post_parser.add_argument("update_content", required=False)
+    post_parser.add_argument("dependent_pkgs", required=False)
+
+    put_parser = reqparse.RequestParser()
+    put_parser.add_argument("package_id", type=int, required=True)
+    put_parser.add_argument("fid", required=True)
+    put_parser.add_argument("version_name", required=True)
+    put_parser.add_argument("build_code", required=True)
+    put_parser.add_argument("update_level", required=False)
+    put_parser.add_argument("update_content", required=False)
+    put_parser.add_argument("dependent_pkgs", required=False)
+
+    delete_parser = reqparse.RequestParser()
+    delete_parser.add_argument("package_id", type=int, required=True)
+
+    @swagger.operation(
+        notes='获取安装包信息',
+        summary='获取安装包信息',
+        nickname='get',
+        parameters=[
+            {
+                "name": settings.USER_SESSION_KEY,
+                "description": "登录凭证",
+                'required': True,
+                'dataType': 'string',
+                'paramType': 'header'
+            },
+            {
+                'name': 'package_id',
+                'description': '安装包ID',
+                'required': True,
+                'dataType': 'integer',
+                'paramType': 'query'
+            }
+        ])
+    def get(self):
+        args = self.get_parser.parse_args()
+        package_id = args["package_id"]
+        package = Package.query.filter_by(id=package_id).join(Project, Package.project_id==Project.id).filter(Project.owner==request.user).first_or_404()
+        data = {"package": package.to_dict()}
+        return {"code": "200", "msg": "获取安装包信息成功", "data": data}
+
+    @swagger.operation(
+        notes='上传安装包',
+        summary='上传安装包',
+        nickname='post',
+        parameters=[
+            {
+                "name": settings.USER_SESSION_KEY,
+                "description": "登录凭证",
+                'required': True,
+                'dataType': 'string',
+                'paramType': 'header'
+            },
+            {
+                'name': 'project_id',
+                'description': '项目ID',
+                'required': True,
+                'dataType': 'integer',
+                'paramType': 'form'
+            },
+            {
+                'name': 'version_name',
+                'description': '版本名称',
+                'required': True,
+                'dataType': 'string',
+                'paramType': 'form'
+            },
+            {
+                'name': 'build_code',
+                'description': 'build号',
+                'required': True,
+                'dataType': 'string',
+                'paramType': 'form'
+            },
+            {
+                'name': 'fid',
+                'description': '上传安装包文件后获取的文件FID',
+                'required': True,
+                'dataType': 'string',
+                'paramType': 'form'
+            },
+            {
+                'name': 'update_level',
+                'description': '是否强制更新',
+                'required': False,
+                'dataType': 'integer',
+                'paramType': 'form'
+            },
+            {
+                'name': 'update_content',
+                'description': '更新内容',
+                'required': False,
+                'dataType': 'string',
+                'paramType': 'form'
+            },
+            {
+                'name': 'dependent_pkgs',
+                'description': '依赖的安装包列表',
+                'required': False,
+                'dataType': 'json',
+                'paramType': 'form'
+            }
+        ])
+    def post(self):
+        args = self.post_parser.parse_args()
+        project = Project.query.filter_by(id=args["project_id"], owner=request.user).first_or_404()
+        package = Package()
+        package.version_name = args["version_name"]
+        package.build_code = args["build_code"]
+        package.fid = args["fid"]
+        package.project_id = args["project_id"]
+        package.update_level = args["update_level"]
+        package.update_content = args["update_content"]
+        if project.is_auto_publish == Project.AUTO_PUBLISH:
+            package.public_status = Package.public_on
+        else:
+            package.public_status = Package.public_off
+        try:
+            db.session.add(package)
+            db.session.commit()
+        except IntegrityError:
+            return {'code': '400', 'msg': '该项目下已存在相同build号的安装包'}
+        try:
+            dependent_pkgs = json.loads(args["dependent_pkgs"])
+            for pkg in dependent_pkgs:
+                dependent_pkg = PackageDependent(package.id, pkg["project_id"], pkg["version_name"])
+                db.session.add(dependent_pkg)
+                db.session.commit()
+        except Exception as e:
+            print e
+        data = {"package": package.to_dict()}
+        return {"code": "200", "msg": "添加安装包成功", "data": data}
+
+    @swagger.operation(
+        notes='修改安装包',
+        summary='修改安装包',
+        nickname='post',
+        parameters=[
+            {
+                "name": settings.USER_SESSION_KEY,
+                "description": "登录凭证",
+                'required': True,
+                'dataType': 'string',
+                'paramType': 'header'
+            },
+            {
+                'name': 'package_id',
+                'description': '安装包ID',
+                'required': True,
+                'dataType': 'integer',
+                'paramType': 'form'
+            },
+            {
+                'name': 'version_name',
+                'description': '版本名称',
+                'required': False,
+                'dataType': 'string',
+                'paramType': 'form'
+            },
+            {
+                'name': 'build_code',
+                'description': 'build号',
+                'required': False,
+                'dataType': 'string',
+                'paramType': 'form'
+            },
+            {
+                'name': 'fid',
+                'description': '上传安装包文件后获取的文件FID',
+                'required': False,
+                'dataType': 'string',
+                'paramType': 'form'
+            },
+            {
+                'name': 'update_level',
+                'description': '是否强制更新',
+                'required': False,
+                'dataType': 'integer',
+                'paramType': 'form'
+            },
+            {
+                'name': 'update_content',
+                'description': '更新内容',
+                'required': False,
+                'dataType': 'string',
+                'paramType': 'form'
+            },
+            {
+                'name': 'dependent_pkgs',
+                'description': '依赖的安装包列表',
+                'required': False,
+                'dataType': 'json',
+                'paramType': 'form'
+            }
+        ])
+    def put(self):
+        args = self.put_parser.parse_args()
+        package_id = args["package_id"]
+        package = Package.query.filter_by(id=package_id).join(Project, Package.project_id==Project.id).filter(Project.owner==request.user).first_or_404()
+        if args["version_name"]:
+            package.version_name = args["version_name"]
+        if args["build_code"]:
+            package.build_code = args["build_code"]
+        if args["fid"] and args["fid"] != package.fid:
+            File(package.fid).delete()
+            package.fid = args["fid"]
+        if args["update_level"]:
+            package.update_level = args["update_level"]
+        if args["update_content"]:
+            package.update_content = args["update_content"]
+        if args["public_status"]:
+            package.public_status = args["public_status"]
+        if args["dependent_pkgs"]:
+            try:
+                # dpt_pkgs = package.dependents
+                # db.session.delete(dpt_pkgs)
+                package.dependents.delete()
+                dependent_pkgs = json.loads(args["dependent_pkgs"])
+                for pkg in dependent_pkgs:
+                    dependent_pkg = PackageDependent(package.id, pkg["project_id"], pkg["version_name"])
+                    db.session.add(dependent_pkg)
+                    db.session.commit()
+            except Exception as e:
+                print e
+        db.session.commit()
+        data = {"package": package.to_dict()}
+        return {"code": "200", "msg": "修改安装包信息成功", "data": data}
+
+    @swagger.operation(
+        notes='删除安装包',
+        summary='删除安装包',
+        nickname='delete',
+        parameters=[
+            {
+                "name": settings.USER_SESSION_KEY,
+                "description": "登录凭证",
+                'required': True,
+                'dataType': 'string',
+                'paramType': 'header'
+            },
+            {
+                'name': 'package_id',
+                'description': '安装包ID',
+                'required': True,
+                'dataType': 'integer',
+                'paramType': 'form'
+            }
+        ])
+    def delete(self):
+        args = self.delete_parser.parse_args()
+        package_id = args["package_id"]
+        package = Package.query.filter_by(id=package_id).join(Project, Package.project_id==Project.id).filter(Project.owner==request.user).first_or_404()
+        # dpt_pkgs = package.dependents.delete()
+        # db.session.delete(dpt_pkgs)
+        package.dependents.delete()
+        File(package.fid).delete()
+        db.session.delete(package)
+        db.session.commit()
+        return {"code": "200", "msg": "删除安装包成功"}
 
 
-@login_required
-def pkg_public():
-	pkg_id = request.args.get("pkg_id")
-	public_status = request.args.get("public_status")
-	if not pkg_id or not public_status:
-		flash("缺少参数")
-	else:
-		if public_status == str(Package.public_off):
-			pub_msg = "取消发布"
-		else:
-			pub_msg = "发布"
-		try:
-			Package.query.filter_by(id=pkg_id).update({Package.public_status: public_status})
-			db.session.commit()
-			flash("%s成功" % pub_msg)
-		except Exception as e:
-			app.logger.info("%s失败" % pub_msg)
-			app.logger.info(str(e))
-			db.session.rollback()
-			flash("%s失败" % pub_msg)
-	return redirect(url_for("pkg_index"))
+class PackageFileAPI(Resource):
 
+    post_parser = reqparse.RequestParser()
+    post_parser.add_argument("project_id", type=int, required=True)
+    post_parser.add_argument("package", type=FileStorage, location='files', required=True)
 
-@login_required
-def pkg_delete():
-	# 程序包删除
-	pkg_id = request.args.get("pkg_id")
-	package = Package.query.filter_by(id=pkg_id).first_or_404()
-	pkg_name = package.name
-	abs_path = os.path.join(config.get("flask", "pkg_path"), pkg_name)
-	try:
-		os.remove(abs_path)
-		db.session.delete(package)
-		db.session.commit()
-		flash("程序包(%s)删除成功" % pkg_name)
-	except Exception as e:
-		app.logger.info("程序包删除失败")
-		app.logger.info(str(e))
-		flash("程序包删除失败")
-	finally:
-		return redirect(url_for("pkg_index"))
+    put_parser = reqparse.RequestParser()
+    put_parser.add_argument("package_id", type=int, required=True)
+    put_parser.add_argument("package", type=FileStorage, location='files', required=True)
 
+    def get(self, fid):
+        package = Package.query.filter_by(fid=fid).first_or_404()
+        project = package.project
+        counter = DayCounter.get_counter(project.uid)
+        counter.increase()
+        req_file = File(fid)
+        try:
+            return send_file(req_file.file, as_attachment=True, attachment_filename=req_file.filename)
+        except IOError:
+            abort(404)
+        except Exception as e:
+            print str(e)
+            abort(400)
 
-def pkg_download(pkg_name):
-	# 获取程序包
-	abs_path = os.path.join(config.get("flask", "pkg_path"), pkg_name)
-	try:
-		return send_file(abs_path)
-	except Exception:
-		abort(404)
+    @swagger.operation(
+        notes='上传安装包文件',
+        summary='上传安装包文件',
+        nickname='post',
+        parameters=[
+            {
+                "name": settings.USER_SESSION_KEY,
+                "description": "登录凭证",
+                'required': True,
+                'dataType': 'string',
+                'paramType': 'header'
+            },
+            {
+                'name': 'project_id',
+                'description': '项目ID',
+                'required': True,
+                'dataType': 'integer',
+                'paramType': 'form'
+            },
+            {
+                'name': 'package',
+                'description': '安装包文件',
+                'required': True,
+                'dataType': 'file',
+                'paramType': 'body'
+            }
+        ])
+    @login_required
+    def post(self):
+        args = self.post_parser.parse_args()
+        package = File.save(args["package"])
+        pkg_info = pkg_parser.start_parse(package)
+        data = {
+            "project_id": args["project_id"],
+            "fid": package.fid,
+            "filename": package.filename,
+            "info": pkg_info
+        }
+        return {"code": "200", "msg": "解析安装包文件成功", "data": data} 
+
+    @swagger.operation(
+        notes='重新上传安装包文件',
+        summary='重新上传安装包文件',
+        nickname='post',
+        parameters=[
+            {
+                "name": settings.USER_SESSION_KEY,
+                "description": "登录凭证",
+                'required': True,
+                'dataType': 'string',
+                'paramType': 'header'
+            },
+            {
+                'name': 'package_id',
+                'description': '安装包ID',
+                'required': True,
+                'dataType': 'integer',
+                'paramType': 'form'
+            },
+            {
+                'name': 'package',
+                'description': '安装包文件',
+                'required': True,
+                'dataType': 'file',
+                'paramType': 'body'
+            }
+        ])
+    @login_required
+    def put(self):
+        args = self.put_parser.parse_args()
+        package = File.save(args["package"])
+        pkg_info = pkg_parser.start_parse(package)
+        data = {
+        	"package_id": args["package_id"],
+        	"fid": package.fid,
+        	"filename": package.filename,
+        	"info": pkg_info
+        }
+        return {"code": "200", "msg": "解析安装包文件成功", "data": data}

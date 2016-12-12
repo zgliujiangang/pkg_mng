@@ -2,29 +2,32 @@
 
 
 from datetime import datetime
-from iot_pkg._global import db
+from iot_pkg.core import create_db
+
+
+db = create_db()
 
 
 class User(db.Model):
-	
-	__tablename__ = "pkg_user"
 
-	id = db.Column(db.Integer, primary_key=True)
-	email = db.Column(db.String(40), unique=True)
-	password = db.Column(db.String(100))
-	create_time = db.Column(db.DateTime, default=datetime.now)
-	update_time = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
+    __tablename__ = "pkg_user"
 
-	__table_args__ = (
-		db.UniqueConstraint("email", name="unique_user_email"),
-		)
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(40), unique=True)
+    password = db.Column(db.String(100))
+    create_time = db.Column(db.DateTime, default=datetime.now)
+    update_time = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
 
-	def __init__(self, email, password):
-		self.email = email
-		self.password = password
+    __table_args__ = (
+        db.UniqueConstraint("email", name="unique_user_email"),
+        )
 
-	# def __str__(self):
-	# 	return self.email
+    def __init__(self, email, password):
+        self.email = email
+        self.password = password
 
-	def to_dict(self):
-		return {"id": self.id, "email": self.email}
+    def __str__(self):
+        return self.email
+
+    def to_dict(self):
+        return {"id": self.id, "email": self.email}

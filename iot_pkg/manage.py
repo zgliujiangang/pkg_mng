@@ -1,90 +1,76 @@
 # -*- coding: utf-8 -*-
 
 
+import os
 import click
+import pprint
+from wsgi import application
 
 
 @click.group()
 def cli():
-	pass
+    pass
 
 
 @cli.command()
 def initdb():
-	# 初始化数据库表
-	from application import db
-	db.drop_all()
-	db.create_all()
-	click.echo("Initialized the database")
+    # 初始化数据库表
+    from iot_pkg.core import create_db
+    db = create_db()
+    pprint.pprint(db.get_tables_for_bind())
+    db.drop_all()
+    db.create_all()
+    click.echo("Initialized the database")
 
 
 @cli.command()
 def dropdb():
-	# 删除数据库
-	from application import db
-	db.drop_all()
-	click.echo("Dropped the database")
-
-
-@cli.command()
-@click.option("--user", "-u", help="admin username")
-@click.option("--pwd", "-p", help="admin password")
-def createuser(user, pwd):
-	# 创建后台用户
-	from _global import db
-	from models.user import User
-	from werkzeug import generate_password_hash
-	print db
-	pwd_hash = generate_password_hash(pwd)
-	user = User(user, pwd_hash)
-	db.session.add(user)
-	db.session.commit()
-	click.echo("create user:%s successfully!" % user)
-
-
-@cli.command()
-@click.option("--user", "-u", help="admin username")
-def dropuser(user):
-	# 删除后台用户
-	from router import db
-	from models.user import User
-	user = User.query.filter_by(name=user).first()
-	db.session.delete(user)
-	db.session.commit()
-	click.echo("drop user:%s successfully" % username)
+    # 删除数据库
+    from iot_pkg.core import create_db
+    db = create_db()
+    db.drop_all()
+    click.echo("Dropped the database")
 
 
 @cli.command()
 def clearall():
-	# 清除数据库以及删除程序包
-	import os
-	from _global import config
-	from router import db
-	db.drop_all()
-	click.echo("Dropped the database")
-	pkg_path = config.get("flask", "pkg_path")
-	pkg_list = os.listdir(pkg_path)
-	try:
-		for pkg in pkg_list:
-			_pkg = os.path.join(pkg_path, pkg)
-			os.remove(_pkg)
-			click.echo("Dropped pkg: %s" % pkg)
-	except Exception as e:
-		click.echo("删除程序包失败")
-		click.echo(str(e))
-		click.echo("请手动删除所有程序包")
-	finally:
-		click.echo("Done...")
+    # 清除数据库以及删除程序包
+    from iot_pkg.core import create_db
+    from iot_pkg import settings
+    db = create_db()
+    db.drop_all()
+    click.echo("Dropped the database")
+    try:
+        file_list = os.listdir(settings.FILE_PATH)
+        for file in file_list:
+            _file = os.path.join(settings.FILE_PATH, file)
+            os.remove(_file)
+            click.echo("Dropped file: %s" % file)
+    except Exception as e:
+        click.echo("删除文件失败")
+        click.echo(str(e))
+        click.echo("请手动删除所有文件")
+    try:
+        cache_files = os.listdir(settings.CACHE_PATH)
+        for file in cache_files:
+            _file = os.path.join(settings.CACHE_PATH, file)
+            os.remove(_file)
+            click.echo("Dropped cache: %s" % file)
+    except Exception as e:
+        click.echo("删除缓存失败")
+        click.echo(str(e))
+        click.echo("请手动删除所有缓存数据")
+    finally:
+        click.echo("Done...")
 
 
 @cli.command()
 @click.option("--host", "-h", default="127.0.0.1", help="run host")
 @click.option("--port", "-p", default=5000, help="run port", type=int)
 def runserver(host, port):
-	# 启动项目
-	from router import app
-	app.run(host=host, port=port, debug=True)
+    # 启动项目
+    application.run(host=host, port=port, debug=True)
 
 
 if __name__ == "__main__":
-	cli()
+    cli()

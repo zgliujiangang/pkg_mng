@@ -1,15 +1,12 @@
 # -*- coding: utf-8 -*-
 
 
-from utils.config import parse_ini_config
+from iot_pkg.conf.settings import *
 
 
-config = parse_ini_config("conf/project.ini")
-
-
-SQLALCHEMY_DATABASE_URI = config.get("sqlite", "uri")
-SQLALCHEMY_TRACK_MODIFICATIONS = True
-SECRET_KEY = "ldolHUK$*21KHLioefd*&1io"
-AUTH_TOKEN_KEY = "access_token"
-AUTH_TOKEN_TIMEOUT = 60 * 3
+SQLALCHEMY_DATABASE_URI = "sqlite:///../data/pkg.db"
+USER_SESSION_TIMEOUT = 60 * 60 * 2
 CACHE_PATH = '/Users/admin/Project/iot_pkg/cache_dir'
+FILE_PATH = '/Users/admin/Project/iot_pkg/files'
+DEFAULT_PAGE = 1
+PER_PAGE = 3

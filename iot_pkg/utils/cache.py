@@ -92,5 +92,6 @@ def _memoize(func, *args, **kwargs):
 
 
 def memoize(func):
+    # 函数计算结果缓存装饰器
     func.cache = {}
     return decorate(func, _memoize)

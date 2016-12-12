@@ -10,3 +10,4 @@ CACHE_PATH = '/Users/admin/Project/iot_pkg/cache_dir'
 FILE_PATH = '/Users/admin/Project/iot_pkg/files'
 DEFAULT_PAGE = 1
 PER_PAGE = 10
+

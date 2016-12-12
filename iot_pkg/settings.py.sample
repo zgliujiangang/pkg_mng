@@ -11,3 +11,4 @@ FILE_PATH = '/Users/admin/Project/iot_pkg/files'
 DEFAULT_PAGE = 1
 PER_PAGE = 10
 SWAGGER_BASE_PATH = 'http://localhost:5000'
+ACCESS_CONTROL = 'update.useonline.cn'

@@ -5,4 +5,4 @@
 /data/
 /files/
 project.ini
-/iot_pkg/settings.py
+iot_pkg/settings.py

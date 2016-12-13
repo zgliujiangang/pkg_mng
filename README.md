@@ -9,3 +9,5 @@
         4. `python manage.py runserver` 本地启项目
         5. 浏览器访问 127.0.0.1:5000
         6. 更多功能可查看manage.py
+### 提示
+        1、运行此服务需要本地安装aapt，并且将aapt加入环境变量中

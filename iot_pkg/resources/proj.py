@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 
+import imghdr
 from werkzeug import FileStorage
 from flask import send_file
 from sqlalchemy.exc import IntegrityError
@@ -181,7 +182,14 @@ class ProjectAPI(Resource):
         args = self.post_parser.parse_args()
         logo = args["logo"]
         if logo:
-            logo_id = File.save(logo).fid
+            logo_file = File.save(logo)
+            logo_id = logo_file.fid
+            if imghdr.what(logo_file.save_path) is None:
+                logo_file.delete()
+                return {'code': '400', 'msg': '上传的图片格式不正确'}
+            if logo_file.size >= 500000:
+                logo_file.delete()
+                return {'code': '400', 'msg': '上传的图片已超过500KB'}
         else:
             logo_id = None
         project = Project(args["name"], request.user.id, args["platform"], logo_id, args["is_auto_publish"])
@@ -251,9 +259,15 @@ class ProjectAPI(Resource):
         if args["platform"] is not None:
             project.platform = args["platform"]
         if args["logo"] is not None:
+            new_logo = File.save(args["logo"])
+            if imghdr.what(new_logo.save_path) is None:
+                new_logo.delete()
+                return {'code': '400', 'msg': '上传的图片格式不正确'}
+            if new_logo.size >= 500000:
+                new_logo.delete()
+                return {'code': '400', 'msg': '上传的图片已超过500KB'}
             if project.logo:
                 File(project.logo).delete()
-            new_logo = File.save(args["logo"])
             project.logo = new_logo.fid
         if args["is_auto_publish"] is not None:
             project.is_auto_publish = args["is_auto_publish"]

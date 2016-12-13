@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 
-from flask import Flask
+from flask import Flask, request
 from flask_restful import Api
 from flask_sqlalchemy import SQLAlchemy
 from flask_restful_swagger import swagger
@@ -16,8 +16,8 @@ def create_app():
     @app.after_request
     def after_request(response):
         response.headers.add('Access-Control-Allow-Origin', settings.ACCESS_CONTROL)
-        response.headers.add('Access-Control-Allow-Headers', settings.USER_SESSION_KEY)
-        response.headers.add('Access-Control-Allow-Methods', 'PUT,POST,GET,DELETE,OPTIONS')
+        response.headers.add('Access-Control-Allow-Headers', request.headers.get('Access-Control-Request-Headers'))
+        response.headers.add('Access-Control-Allow-Methods', request.headers.get('Access-Control-Request-Method'))
         return response
     return app
 

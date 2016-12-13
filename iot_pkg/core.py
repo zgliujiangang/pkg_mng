@@ -16,6 +16,7 @@ def create_app():
     @app.after_request
     def after_request(response):
         response.headers.add('Access-Control-Allow-Origin', settings.ACCESS_CONTROL)
+        response.headers.add('Access-Control-Allow-Headers', settings.USER_SESSION_KEY)
         return response
     return app
 

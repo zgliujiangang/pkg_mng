@@ -4,10 +4,9 @@
 import os
 import uuid
 from iot_pkg import settings
-from iot_pkg.core import create_api, create_cache
+from iot_pkg.core import create_cache
 
 
-api = create_api()
 cache = create_cache()
 
 

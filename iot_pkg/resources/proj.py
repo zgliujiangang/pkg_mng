@@ -192,7 +192,8 @@ class ProjectAPI(Resource):
                 return {'code': '400', 'msg': '上传的图片已超过500KB'}
         else:
             logo_id = None
-        project = Project(args["name"], request.user.id, args["platform"], logo_id, args["is_auto_publish"])
+        name = unicode(args['name'])
+        project = Project(name, request.user.id, args["platform"], logo_id, args["is_auto_publish"])
         try:
             db.session.add(project)
             db.session.commit()
@@ -255,7 +256,7 @@ class ProjectAPI(Resource):
         args = self.put_parser.parse_args()
         project = Project.query.filter_by(id=args["project_id"], owner=request.user).first_or_404()
         if args["name"] is not None:
-            project.name = args["name"]
+            project.name = unicode(args["name"])
         if args["platform"] is not None:
             project.platform = args["platform"]
         if args["logo"] is not None:

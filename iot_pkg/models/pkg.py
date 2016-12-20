@@ -72,6 +72,7 @@ class Package(db.Model):
         data['filename'] = pkg_file.filename
         data['filesize'] = pkg_file.size
         data['dependents'] = [dpt.to_dict() for dpt in self.dependents.all()]
+        data['create_time'] = self.create_time.strftime('%Y-%m-%d %H:%M')
         return data
 
 

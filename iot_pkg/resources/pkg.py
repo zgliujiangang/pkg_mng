@@ -306,8 +306,8 @@ class PackageAPI(Resource):
             package.update_level = args["update_level"]
         if args["update_content"]:
             package.update_content = args["update_content"]
-        if args["public_status"]:
-            package.public_status = args["public_status"]
+        # if args["public_status"]:
+        #     package.public_status = args["public_status"]
         if args["dependent_pkgs"]:
             try:
                 # dpt_pkgs = package.dependents

@@ -43,7 +43,8 @@ class File(object):
     def file(self, _file):
         save_path = self.save_path
         if _file is None:
-            os.remove(save_path)
+            if os.path.exists(save_path):
+                os.remove(save_path)
         else:
             _file.save(save_path)
 

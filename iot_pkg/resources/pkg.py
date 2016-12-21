@@ -100,12 +100,13 @@ class PackageAPI(Resource):
 
     put_parser = reqparse.RequestParser()
     put_parser.add_argument("package_id", type=int, required=True)
-    put_parser.add_argument("fid", required=True)
-    put_parser.add_argument("version_name", required=True)
-    put_parser.add_argument("build_code", required=True)
+    put_parser.add_argument("fid", required=False)
+    put_parser.add_argument("version_name", required=False)
+    put_parser.add_argument("build_code", required=False)
     put_parser.add_argument("update_level", required=False)
     put_parser.add_argument("update_content", required=False)
     put_parser.add_argument("dependent_pkgs", required=False)
+    put_parser.add_argument("public_status", required=False)
 
     delete_parser = reqparse.RequestParser()
     delete_parser.add_argument("package_id", type=int, required=True)

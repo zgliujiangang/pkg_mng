@@ -289,6 +289,13 @@ class PackageAPI(Resource):
                 'required': False,
                 'dataType': 'json',
                 'paramType': 'form'
+            },
+            {
+                'name': 'public_status',
+                'description': '是否发布, (0, 未发布)(1, 已发布)',
+                'required': False,
+                'dataType': 'string',
+                'paramType': 'form'
             }
         ])
     def put(self):
@@ -306,8 +313,8 @@ class PackageAPI(Resource):
             package.update_level = args["update_level"]
         if args["update_content"]:
             package.update_content = args["update_content"]
-        # if args["public_status"]:
-        #     package.public_status = args["public_status"]
+        if args["public_status"]:
+            package.public_status = args["public_status"]
         if args["dependent_pkgs"]:
             try:
                 # dpt_pkgs = package.dependents

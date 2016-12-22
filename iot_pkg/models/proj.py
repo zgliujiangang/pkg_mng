@@ -4,6 +4,7 @@
 import uuid
 from flask import url_for
 from datetime import datetime, date
+from iot_pkg import settings
 from iot_pkg.core import create_db
 from iot_pkg.models.counter import DayCounter
 
@@ -61,8 +62,8 @@ class Project(db.Model):
             "logo": self.logo,
             "auto_publish": self.is_auto_publish,
             "auto_publish_display": self.IS_AUTO_PUBLISH.get(self.is_auto_publish),
-            "msg_url": url_for("project_msg", uid=self.uid, _external=True),
-            "download_url": url_for("project_download", uid=self.uid, _external=True)
+            "msg_url": settings.DOMAIN + url_for("project_msg", uid=self.uid),
+            "download_url": settings.DOMAIN + url_for("project_download", uid=self.uid)
         }
         # data["today_download"] = DayCounter.get_counter(self.uid).number
         # data["total_download"] = DayCounter.get_counters(cid=self.uid).with_entities(db.func.sum(DayCounter.number)).one()[0]

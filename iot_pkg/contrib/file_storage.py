@@ -10,6 +10,16 @@ from iot_pkg.core import create_cache
 cache = create_cache()
 
 
+class BaseFile(object):
+
+    def __init__(self, fid):
+        self.fid = fid
+
+    @classmethod
+    def save(cls, _file):
+        pass
+
+
 class File(object):
 
     def __init__(self, fid):

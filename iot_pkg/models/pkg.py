@@ -6,6 +6,7 @@ from flask import url_for
 from iot_pkg.contrib.file_storage import File
 from iot_pkg.models.proj import Project
 from iot_pkg.core import create_db
+from iot_pkg import settings
 
 
 db = create_db()
@@ -67,7 +68,7 @@ class Package(db.Model):
         data['update_level'] = self.update_level
         data['update_level_display'] = self.UPDATE_LEVEL.get(self.update_level)
         data['update_content'] = self.update_content
-        data["download_url"] = url_for('package_download', fid=self.fid, _external=True)
+        data["download_url"] = settings.DOMAIN + url_for('package_download', fid=self.fid)
         pkg_file = File(self.fid)
         data['filename'] = pkg_file.filename
         data['filesize'] = pkg_file.size

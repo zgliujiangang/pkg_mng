@@ -104,7 +104,7 @@ class PackageAPI(Resource):
     put_parser.add_argument("version_name", required=False)
     put_parser.add_argument("build_code", required=False)
     put_parser.add_argument("update_level", required=False)
-    put_parser.add_argument("update_content", required=False)
+    put_parser.add_argument("update_content", required=False, default="")
     put_parser.add_argument("dependent_pkgs", required=False)
     put_parser.add_argument("public_status", required=False)
 
@@ -312,8 +312,8 @@ class PackageAPI(Resource):
             package.fid = args["fid"]
         if args["update_level"]:
             package.update_level = args["update_level"]
-        if args["update_content"]:
-            package.update_content = args["update_content"]
+        # if args["update_content"]:
+        package.update_content = args["update_content"]
         if args["public_status"]:
             package.public_status = args["public_status"]
         if args["dependent_pkgs"]:

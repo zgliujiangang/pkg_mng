@@ -71,12 +71,12 @@ class ProjectListAPI(Resource):
         ])
     def get(self):
         args = self.get_parser.parse_args()
-        projects = request.user.projects.order_by(Project.id.desc(), Package.id.desc())
+        projects = request.user.projects.order_by(Project.id.desc())
         if args["name"] is not None:
             projects = projects.filter(Project.name.ilike("%" + args["name"] + "%"))
         if args["platform"] is not None:
             projects = projects.filter_by(platform=args["platform"])
-        projects = projects.join(Package, Project.id==Package.project_id)\
+        projects = projects.outerjoin(Package, Project.id==Package.project_id)\
             .with_entities(Project, Package.version_name).group_by(Project.id)
         paginate = projects.paginate(args["page"], per_page=args["per_page"])
         projects = [dict(project.to_dict(), version_name=v) for project, v in paginate.items]

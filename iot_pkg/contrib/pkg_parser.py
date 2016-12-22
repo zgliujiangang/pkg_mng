@@ -71,5 +71,4 @@ def parse_ios(pkg_file):
     fp = io.BytesIO(plist_data)
     info = biplist.readPlist(fp)
     fp.close()
-    print info
-    return info
+    return {'v_name': info.get('CFBundleShortVersionString'), 'v_code': info.get('CFBundleVersion')}

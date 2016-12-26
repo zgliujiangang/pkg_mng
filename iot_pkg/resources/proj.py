@@ -27,6 +27,7 @@ class ProjectListAPI(Resource):
     get_parser = page_parser.copy()
     get_parser.add_argument("name", type=str, location='args', required=False)
     get_parser.add_argument("platform", type=int, location='args', choices=Project.PLATFORM.keys(), required=False)
+    get_parser.add_argument('exclude', type=int, location='args', required=False)
 
     @swagger.operation(
         notes='获取项目列表',
@@ -67,6 +68,13 @@ class ProjectListAPI(Resource):
                 'required': False,
                 'dataType': 'integer',
                 'paramType': 'query'
+            },
+            {
+                'name': 'exclude',
+                'description': '排除某个项目',
+                'required': False,
+                'dataType': 'integer',
+                'paramType': 'query'
             }
         ])
     def get(self):
@@ -76,6 +84,8 @@ class ProjectListAPI(Resource):
             projects = projects.filter(Project.name.ilike("%" + args["name"] + "%"))
         if args["platform"] is not None:
             projects = projects.filter_by(platform=args["platform"])
+        if args['exclude']:
+            projects = projects.filter(Project.id != args['exclude'])
         projects = projects.outerjoin(Package, Project.id==Package.project_id)\
             .with_entities(Project, Package.version_name).group_by(Project.id)
         paginate = projects.paginate(args["page"], per_page=args["per_page"])

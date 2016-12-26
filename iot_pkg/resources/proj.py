@@ -351,13 +351,13 @@ class ProjectMsgAPI(Resource):
     def get(self, uid):
         project = Project.query.filter_by(uid=uid).first_or_404()
         data = {"project": project.to_dict()}
-        packages = project.pkgs.order_by(Package.version_name.desc())
+        packages = project.pkgs.filter_by(public_status=Package.public_on).order_by(Package.version_name.desc())
         latest_package = None
         for pkg in packages:
             dpt_pkgs = pkg.dependents
             all_exists = True
             for dpt in dpt_pkgs:
-                dpt_exists = Package.query.filter_by(project_id=dpt.project_id, version_name=dpt.version_name).scalar()
+                dpt_exists = Package.query.filter_by(project_id=dpt.project_id, version_name=dpt.version_name, public_status=Package.public_on).scalar()
                 if not dpt_exists:
                     all_exists = False
                     break
@@ -376,13 +376,13 @@ class ProjectFileAPI(Resource):
 
     def get(self, uid):
         project = Project.query.filter_by(uid=uid).first_or_404()
-        packages = project.pkgs.order_by(Package.version_name.desc())
+        packages = project.pkgs.filter_by(public_status=Package.public_on).order_by(Package.version_name.desc())
         latest_package = None
         for pkg in packages:
             dpt_pkgs = pkg.dependents
             all_exists = True
             for dpt in dpt_pkgs:
-                dpt_exists = Package.query.filter_by(project_id=dpt.project_id, version_name=dpt.version_name).scalar()
+                dpt_exists = Package.query.filter_by(project_id=dpt.project_id, version_name=dpt.version_name, public_status=Package.public_on).scalar()
                 if not dpt_exists:
                     all_exists = False
                     break

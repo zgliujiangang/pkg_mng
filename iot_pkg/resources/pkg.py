@@ -312,10 +312,11 @@ class PackageAPI(Resource):
             package.fid = args["fid"]
         if args["update_level"]:
             package.update_level = args["update_level"]
-        # if args["update_content"]:
-        package.update_content = args["update_content"]
         if args["public_status"]:
+            # 这段代码你可能看不懂，但是就应该这么写
             package.public_status = args["public_status"]
+        else:
+            package.update_content = args["update_content"]
         if args["dependent_pkgs"]:
             try:
                 # dpt_pkgs = package.dependents

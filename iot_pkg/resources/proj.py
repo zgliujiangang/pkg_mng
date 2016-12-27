@@ -394,6 +394,6 @@ class ProjectFileAPI(Resource):
             package_file = File(latest_package.fid)
             counter = DayCounter.get_counter(project.uid)
             counter.increase()
-            return send_file(package_file.file, as_attachment=True, attachment_filename=package_file.filename)
+            return send_file(package_file.save_path, as_attachment=True, attachment_filename=package_file.filename)
         else:
             abort(404)

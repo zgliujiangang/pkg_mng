@@ -15,7 +15,7 @@ class FileAPI(Resource):
     def get(self, file_id):
         req_file = File(file_id)
         try:
-            return send_file(req_file.file, as_attachment=True, attachment_filename=req_file.filename)
+            return send_file(req_file.save_path, as_attachment=True, attachment_filename=req_file.filename)
         except IOError:
             abort(404)
         except Exception as e:

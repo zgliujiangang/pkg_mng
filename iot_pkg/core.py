@@ -18,6 +18,7 @@ def create_app():
         response.headers.add('Access-Control-Allow-Origin', settings.ACCESS_CONTROL)
         response.headers.add('Access-Control-Allow-Headers', request.headers.get('Access-Control-Request-Headers'))
         response.headers.add('Access-Control-Allow-Methods', request.headers.get('Access-Control-Request-Method'))
+        response.headers.add('Access-Control-Max-Age', 86400)
         return response
     return app
 

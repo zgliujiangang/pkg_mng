@@ -65,6 +65,19 @@ def clearall():
 
 
 @cli.command()
+def update():
+    from iot_pkg.core import create_db
+    from iot_pkg.models.proj import Project
+    from iot_pkg.utils import get_random_string
+    db = create_db()
+    projects = Project.query.all()
+    for proj in projects:
+        proj.uid = proj.make_uid()
+    db.session.commit()
+    click.echo('Done...')
+
+
+@cli.command()
 @click.option("--host", "-h", default="127.0.0.1", help="run host")
 @click.option("--port", "-p", default=5000, help="run port", type=int)
 def runserver(host, port):

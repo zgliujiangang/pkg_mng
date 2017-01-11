@@ -4,9 +4,14 @@
 import uuid
 from flask import url_for
 from datetime import datetime, date
+try:
+    from werkzeug.urls import url_unquote
+except ImportError:
+    from urlparse import quote as url_unquote
 from iot_pkg import settings
 from iot_pkg.core import create_db
 from iot_pkg.models.counter import DayCounter
+from iot_pkg.utils import get_random_string
 
 
 db = create_db()
@@ -48,9 +53,13 @@ class Project(db.Model):
         self.platform = platform
         self.logo = logo
         self.is_auto_publish = is_auto_publish
+        self.uid = self.make_uid()
 
     def __str__(self):
         return self.name
+
+    def make_uid(self):
+        return unicode(str(self.name) + '_' + get_random_string(3))
 
     def to_dict(self):
         data = {
@@ -62,8 +71,8 @@ class Project(db.Model):
             "logo": self.logo,
             "auto_publish": self.is_auto_publish,
             "auto_publish_display": self.IS_AUTO_PUBLISH.get(self.is_auto_publish),
-            "msg_url": settings.DOMAIN + url_for("project_msg", uid=self.uid),
-            "download_url": settings.DOMAIN + url_for("project_download", uid=self.uid)
+            "msg_url": settings.DOMAIN + url_unquote(url_for("project_msg", uid=self.uid)),
+            "download_url": settings.DOMAIN + url_unquote(url_for("project_download", uid=self.uid))
         }
         # data["today_download"] = DayCounter.get_counter(self.uid).number
         # data["total_download"] = DayCounter.get_counters(cid=self.uid).with_entities(db.func.sum(DayCounter.number)).one()[0]

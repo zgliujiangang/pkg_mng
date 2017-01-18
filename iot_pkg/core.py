@@ -15,7 +15,7 @@ def create_app():
     app.secret_key = settings.SECRET_KEY
     @app.before_request
     def before_request():
-        if request.headers.get('Protocol') == 'https':
+        if request.headers.get('Referer') == 'https':
             settings.DOMAIN = 'https://update.useonline.cn'
     @app.after_request
     def after_request(response):

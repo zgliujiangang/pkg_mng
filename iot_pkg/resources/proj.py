@@ -79,6 +79,10 @@ class ProjectListAPI(Resource):
             }
         ])
     def get(self):
+        app.logger.warning(str(request.headers))
+        app.logger.warning(request.remote_addr)
+        app.logger.warning(request.url)
+        app.logger.warning(settings.DOMAIN)
         args = self.get_parser.parse_args()
         projects = request.user.projects.order_by(Project.id.desc())
         if args["name"] is not None:

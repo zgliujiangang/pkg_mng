@@ -2,14 +2,13 @@
 
 
 import imghdr
-import logging
 from werkzeug import FileStorage
 from flask import send_file
 from sqlalchemy.exc import IntegrityError
 from flask_restful import request, Resource, reqparse, abort
 from flask_restful_swagger import swagger
 from iot_pkg import settings
-from iot_pkg.core import create_db
+from iot_pkg.core import create_db, create_app
 from iot_pkg.contrib.auth import login_required
 from iot_pkg.contrib.file_storage import File
 from iot_pkg.resources.common import page_parser
@@ -19,6 +18,7 @@ from iot_pkg.models.counter import DayCounter
 
 
 db = create_db()
+app = create_app()
 
 
 class ProjectListAPI(Resource):
@@ -79,7 +79,9 @@ class ProjectListAPI(Resource):
             }
         ])
     def get(self):
-        logging.info(settings.DOMAIN)
+        app.logger.warning(request.url)
+        if request.url.startswith('https'):
+            app.logger.warning(settings.DOMAIN)
         args = self.get_parser.parse_args()
         projects = request.user.projects.order_by(Project.id.desc())
         if args["name"] is not None:

@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 
-import logging
 from flask import Flask, request
 from flask_restful import Api
 from flask_sqlalchemy import SQLAlchemy
@@ -17,7 +16,6 @@ def create_app():
     @app.before_request
     def before_request():
         if request.url.startswith('https'):
-            logging.info(str(request.url))
             settings.DOMAIN = 'https://update.useonline.cn'
     @app.after_request
     def after_request(response):

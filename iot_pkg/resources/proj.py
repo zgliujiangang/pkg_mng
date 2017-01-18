@@ -2,6 +2,7 @@
 
 
 import imghdr
+import logging
 from werkzeug import FileStorage
 from flask import send_file
 from sqlalchemy.exc import IntegrityError
@@ -78,6 +79,7 @@ class ProjectListAPI(Resource):
             }
         ])
     def get(self):
+        logging.info(settings.DOMAIN)
         args = self.get_parser.parse_args()
         projects = request.user.projects.order_by(Project.id.desc())
         if args["name"] is not None:

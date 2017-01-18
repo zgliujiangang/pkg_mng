@@ -19,6 +19,8 @@ def create_app():
         if referer and referer.startswith('https'):
             app.logger.warning('referer https')
             settings.DOMAIN = 'https://update.useonline.cn'
+        else:
+            settings.DOMAIN = 'http://update.useonline.cn'
     @app.after_request
     def after_request(response):
         response.headers.add('Access-Control-Allow-Origin', settings.ACCESS_CONTROL)

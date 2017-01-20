@@ -364,6 +364,7 @@ class ProjectMsgAPI(Resource):
                     break
             if all_exists:
                 latest_package = pkg
+                break
             else:
                 continue
         if latest_package:
@@ -389,6 +390,7 @@ class ProjectFileAPI(Resource):
                     break
             if all_exists:
                 latest_package = pkg
+                break
             else:
                 continue
         if latest_package:

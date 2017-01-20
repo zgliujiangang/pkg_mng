@@ -69,7 +69,7 @@ class PackageListAPI(Resource):
         project_data = project.to_dict()
         project_data["today_download"] = DayCounter.get_counter(cid=project.uid).number
         project_data["total_download"] = DayCounter.get_counters(cid=project.uid).with_entities(db.func.sum(DayCounter.number)).one()[0]
-        packages = project.pkgs.order_by(Package.id.desc())
+        packages = project.pkgs.order_by(Package.build_code.desc())
         paginate = packages.paginate(args["page"], per_page=args["per_page"])
         data = {
             "page": paginate.page, 

@@ -352,7 +352,7 @@ class ProjectMsgAPI(Resource):
     def get(self, uid):
         project = Project.query.filter_by(uid=uid).first_or_404()
         data = {"project": project.to_dict()}
-        packages = project.pkgs.filter_by(public_status=Package.public_on).order_by(Package.version_name.desc())
+        packages = project.pkgs.filter_by(public_status=Package.public_on).order_by(Package.build_code.desc())
         latest_package = None
         for pkg in packages:
             dpt_pkgs = pkg.dependents
@@ -377,7 +377,7 @@ class ProjectFileAPI(Resource):
 
     def get(self, uid):
         project = Project.query.filter_by(uid=uid).first_or_404()
-        packages = project.pkgs.filter_by(public_status=Package.public_on).order_by(Package.version_name.desc())
+        packages = project.pkgs.filter_by(public_status=Package.public_on).order_by(Package.build_code.desc())
         latest_package = None
         for pkg in packages:
             dpt_pkgs = pkg.dependents

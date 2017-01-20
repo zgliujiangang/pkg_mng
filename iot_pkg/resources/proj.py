@@ -147,7 +147,7 @@ class ProjectAPI(Resource):
     def get(self):
         args = self.get_parser.parse_args()
         project = Project.query.filter_by(id=args["project_id"], owner=request.user).first_or_404()
-        package = project.pkgs.order_by(Package.id.desc()).first()
+        package = project.pkgs.order_by(Package.build_code.desc()).first()
         if package:
             version_name = package.version_name
         else:

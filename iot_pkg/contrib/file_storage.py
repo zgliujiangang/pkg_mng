@@ -72,3 +72,22 @@ class File(object):
     @property
     def size(self):
         return os.path.getsize(self.save_path)
+
+
+def get_partial_file(l_file, start, end=None):
+    if end:
+        length = end - start
+    else:
+        length = l_file.size - start
+    # fp, data = None, None
+    with l_file.file as fp:
+        fp.seek(start)
+        return fp.read(length)
+    # try:
+    #     fp = l_file.file
+    #     fp.seek(start)
+    #     data = fp.read(length)
+    # finally:
+    #     if fp:
+    #         fp.close()
+    # return data

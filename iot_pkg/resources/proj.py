@@ -1,16 +1,17 @@
 # -*- coding: utf-8 -*-
-
-
 import imghdr
+import re
+import mimetypes
 from werkzeug import FileStorage
-from flask import send_file
+from flask import send_file, Response
 from sqlalchemy.exc import IntegrityError
 from flask_restful import request, Resource, reqparse, abort
 from flask_restful_swagger import swagger
+
 from iot_pkg import settings
 from iot_pkg.core import create_db, create_app
 from iot_pkg.contrib.auth import login_required
-from iot_pkg.contrib.file_storage import File
+from iot_pkg.contrib.file_storage import File, get_partial_file
 from iot_pkg.resources.common import page_parser
 from iot_pkg.models.proj import Project
 from iot_pkg.models.pkg import Package
@@ -376,6 +377,9 @@ class ProjectMsgAPI(Resource):
 
 class ProjectFileAPI(Resource):
 
+    get_parser = reqparse.RequestParser()
+    get_parser.add_argument('range', location='headers')
+
     def get(self, uid):
         project = Project.query.filter_by(uid=uid).first_or_404()
         packages = project.pkgs.filter_by(public_status=Package.public_on).order_by(Package.build_code.desc())
@@ -395,8 +399,31 @@ class ProjectFileAPI(Resource):
                 continue
         if latest_package:
             package_file = File(latest_package.fid)
-            counter = DayCounter.get_counter(project.uid)
-            counter.increase()
-            return send_file(package_file.save_path, as_attachment=True, attachment_filename=package_file.filename)
+            args = self.get_parser.parse_args()
+            if args['range']:
+                range_match = re.search('^bytes=(\d+)-(\d*)$', args['range'])
+                range_match = range_match.groups()
+                start_byte = range_match[0]
+                if start_byte:
+                    start_byte = int(start_byte)
+                end_byte = range_match[1]
+                if end_byte:
+                    end_byte = int(end_byte)
+                else:
+                    end_byte = package_file.size
+                file_data = get_partial_file(package_file, start_byte, end_byte)
+                resp = Response(file_data,
+                                206,
+                                mimetype=mimetypes.guess_type(package_file.save_path)[0],
+                                direct_passthrough=True)
+                content_range = 'bytes {start}-{end}/{size}'.format(start=start_byte,
+                                                                    end=end_byte,
+                                                                    size=package_file.size)
+                resp.headers.add('Content-Range', content_range)
+                return resp
+            else:
+                counter = DayCounter.get_counter(project.uid)
+                counter.increase()
+                return send_file(package_file.save_path, as_attachment=True, attachment_filename=package_file.filename)
         else:
             abort(404)

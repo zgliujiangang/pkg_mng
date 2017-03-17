@@ -6,3 +6,4 @@
 /files/
 project.ini
 iot_pkg/settings.py
+*.idea/

@@ -1,22 +1,22 @@
 # -*- coding:utf-8 -*-
-
-
 import json
+import re
+import mimetypes
 from werkzeug import FileStorage
 from sqlalchemy.exc import IntegrityError
-from flask import send_file
+from flask import send_file, Response
 from flask_restful import request, reqparse, Resource, abort
 from flask_restful_swagger import swagger
+
 from iot_pkg import settings
 from iot_pkg.core import create_db
 from iot_pkg.contrib.auth import login_required
-from iot_pkg.contrib.file_storage import File
+from iot_pkg.contrib.file_storage import File, get_partial_file
 from iot_pkg.contrib.pkg_parser import pkg_parser
 from iot_pkg.resources.common import page_parser
 from iot_pkg.models.proj import Project
 from iot_pkg.models.counter import DayCounter
 from iot_pkg.models.pkg import Package, PackageDependent
-
 
 db = create_db()
 
@@ -368,6 +368,9 @@ class PackageAPI(Resource):
 
 class PackageFileAPI(Resource):
 
+    get_parser = reqparse.RequestParser()
+    get_parser.add_argument('range', location='headers')
+
     post_parser = reqparse.RequestParser()
     post_parser.add_argument("project_id", type=int, required=True)
     post_parser.add_argument("package", type=FileStorage, location='files', required=True)
@@ -382,13 +385,36 @@ class PackageFileAPI(Resource):
         counter = DayCounter.get_counter(project.uid)
         counter.increase()
         req_file = File(fid)
-        try:
-            return send_file(req_file.save_path, as_attachment=True, attachment_filename=req_file.filename)
-        except IOError:
-            abort(404)
-        except Exception as e:
-            print str(e)
-            abort(400)
+        args = self.get_parser.parse_args()
+        if args['range']:
+            range_match = re.search('^bytes=(\d+)-(\d*)$', args['range'])
+            range_match = range_match.groups()
+            start_byte = range_match[0]
+            if start_byte:
+                start_byte = int(start_byte)
+            end_byte = range_match[1]
+            if end_byte:
+                end_byte = int(end_byte)
+            else:
+                end_byte = req_file.size
+            file_data = get_partial_file(req_file, start_byte, end_byte)
+            resp = Response(file_data,
+                            206,
+                            mimetype=mimetypes.guess_type(req_file.save_path)[0],
+                            direct_passthrough=True)
+            content_range = 'bytes {start}-{end}/{size}'.format(start=start_byte,
+                                                                end=end_byte,
+                                                                size=req_file.size)
+            resp.headers.add('Content-Range', content_range)
+            return resp
+        else:
+            try:
+                return send_file(req_file.save_path, as_attachment=True, attachment_filename=req_file.filename)
+            except IOError:
+                abort(404)
+            except Exception as e:
+                print str(e)
+                abort(400)
 
     @swagger.operation(
         notes='上传安装包文件',
@@ -463,9 +489,9 @@ class PackageFileAPI(Resource):
         package = File.save(args["package"])
         pkg_info = pkg_parser.start_parse(package)
         data = {
-        	"package_id": args["package_id"],
-        	"fid": package.fid,
-        	"filename": package.filename,
-        	"info": pkg_info
+            "package_id": args["package_id"],
+            "fid": package.fid,
+            "filename": package.filename,
+            "info": pkg_info
         }
         return {"code": "200", "msg": "解析安装包文件成功", "data": data}

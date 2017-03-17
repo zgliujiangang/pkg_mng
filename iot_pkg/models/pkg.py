@@ -61,7 +61,7 @@ class Package(db.Model):
         data = {}
         data['id'] = self.id
         data['version_name'] = self.version_name
-        data['build_code'] = self.build_code
+        data['build_code'] = int(self.build_code)
         data['fid'] = self.fid
         data['public_status'] = self.public_status
         data['public_status_display'] = self.PUBLIC_STATUS.get(self.public_status)

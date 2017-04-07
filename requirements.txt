@@ -4,7 +4,7 @@ click==6.6
 flask-restful
 decorator
 biplist
-
+requests
 #以gunicorn+gevent方式部署
 #gevent==1.1.2
 #gunicorn==19.6.0

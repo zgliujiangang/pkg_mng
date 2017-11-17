@@ -337,6 +337,9 @@ class ProjectAPI(Resource):
 
 class ProjectMsgAPI(Resource):
 
+    get_parser = reqparse.RequestParser()
+    get_parser.add_argument("channel", type=str, required=False)
+
     @swagger.operation(
         notes='获取项目信息（无需token）',
         summary='获取项目信息（无需token）',
@@ -351,9 +354,15 @@ class ProjectMsgAPI(Resource):
             }
         ])
     def get(self, uid):
+        args = self.get_parser.parse_args()
+        channel = args['channel']
         project = Project.query.filter_by(uid=uid).first_or_404()
         data = {"project": project.to_dict()}
-        packages = project.pkgs.filter_by(public_status=Package.public_on).order_by(Package.build_code.desc())
+        if channel:
+            packages = project.pkgs.filter_by(public_status=Package.public_on,
+                                              channel=channel).order_by(Package.build_code.desc())
+        else:
+            packages = project.pkgs.filter_by(public_status=Package.public_on).order_by(Package.build_code.desc())
         latest_package = None
         for pkg in packages:
             dpt_pkgs = pkg.dependents
@@ -379,10 +388,17 @@ class ProjectFileAPI(Resource):
 
     get_parser = reqparse.RequestParser()
     get_parser.add_argument('range', location='headers')
+    get_parser.add_argument('channel', type=str, required=False)
 
     def get(self, uid):
+        args = self.get_parser.parse_args()
+        channel = args['channel']
         project = Project.query.filter_by(uid=uid).first_or_404()
-        packages = project.pkgs.filter_by(public_status=Package.public_on).order_by(Package.build_code.desc())
+        if channel:
+            packages = project.pkgs.filter_by(public_status=Package.public_on,
+                                              channel=channel).order_by(Package.build_code.desc())
+        else:
+            packages = project.pkgs.filter_by(public_status=Package.public_on).order_by(Package.build_code.desc())
         latest_package = None
         for pkg in packages:
             dpt_pkgs = pkg.dependents

@@ -4,7 +4,6 @@
 from datetime import datetime
 from flask import url_for
 from iot_pkg.contrib.file_storage import File
-from iot_pkg.models.proj import Project
 from iot_pkg.core import create_db
 from iot_pkg import settings
 
@@ -30,6 +29,7 @@ class Package(db.Model):
     fid = db.Column(db.String(50), nullable=False)
     project_id = db.Column(db.Integer, db.ForeignKey("pkg_project.id"), nullable=False)
     project = db.relationship("Project", backref=db.backref("pkgs", lazy="dynamic"))
+    channel = db.Column(db.String(20), default='')
     public_status = db.Column(db.Integer, default=public_off)
     update_level = db.Column(db.Integer, default=update_free)
     update_content = db.Column(db.Text)
@@ -40,8 +40,9 @@ class Package(db.Model):
         # 相同项目一个版本只能有一条记录
         db.UniqueConstraint("project_id", "build_code", name="unique_proj_build"),
         )
-	
-    def __init__(self, version_name=None, build_code=None, fid=None, project_id=None, public_status=None, update_level=None, update_content=None):
+
+    def __init__(self, version_name=None, build_code=None, fid=None, project_id=None,
+                 public_status=None, update_level=None, update_content=None, channel=None):
         self.version_name = version_name
         self.build_code = build_code
         self.fid = fid
@@ -49,6 +50,7 @@ class Package(db.Model):
         self.public_status = public_status
         self.update_level = update_level
         self.update_content = update_content
+        self.channel = channel
 
     def __str__(self):
         return self.file.filename
@@ -74,6 +76,7 @@ class Package(db.Model):
         data['filesize'] = pkg_file.size
         data['dependents'] = [dpt.to_dict() for dpt in self.dependents.all()]
         data['create_time'] = self.create_time.strftime('%Y-%m-%d %H:%M')
+        data['channel'] = self.channel
         return data
 
 

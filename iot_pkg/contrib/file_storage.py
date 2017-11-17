@@ -76,7 +76,7 @@ class File(object):
 
 def get_partial_file(l_file, start, end=None):
     if end:
-        length = end - start
+        length = end - start + 1
     else:
         length = l_file.size - start
     # fp, data = None, None

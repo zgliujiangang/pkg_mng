@@ -17,6 +17,7 @@ from iot_pkg.resources.common import page_parser
 from iot_pkg.models.proj import Project
 from iot_pkg.models.counter import DayCounter
 from iot_pkg.models.pkg import Package, PackageDependent
+from iot_pkg.models.channel import Channel
 
 db = create_db()
 
@@ -97,6 +98,7 @@ class PackageAPI(Resource):
     post_parser.add_argument("update_level", required=False)
     post_parser.add_argument("update_content", required=False)
     post_parser.add_argument("dependent_pkgs", required=False)
+    post_parser.add_argument('channel', required=False)
 
     put_parser = reqparse.RequestParser()
     put_parser.add_argument("package_id", type=int, required=True)
@@ -107,6 +109,7 @@ class PackageAPI(Resource):
     put_parser.add_argument("update_content", required=False, default="")
     put_parser.add_argument("dependent_pkgs", required=False)
     put_parser.add_argument("public_status", required=False)
+    put_parser.add_argument('channel', required=False)
 
     delete_parser = reqparse.RequestParser()
     delete_parser.add_argument("package_id", type=int, required=True)
@@ -198,6 +201,13 @@ class PackageAPI(Resource):
                 'required': False,
                 'dataType': 'json',
                 'paramType': 'form'
+            },
+            {
+                'name': 'channel',
+                'description': '渠道名称',
+                'required': False,
+                'dataType': 'string',
+                'paramType': 'form'
             }
         ])
     def post(self):
@@ -210,6 +220,11 @@ class PackageAPI(Resource):
         package.project_id = args["project_id"]
         package.update_level = args["update_level"]
         package.update_content = args["update_content"]
+        package.channel = args['channel']
+        if args['channel'] and not Channel.query.filter_by(project_id=args['project_id'], name=args['channel']).first():
+            channel = Channel(args['project_id'], args['channel'])
+            db.session.add(channel)
+            db.session.commit()
         if project.is_auto_publish == Project.AUTO_PUBLISH:
             package.public_status = Package.public_on
         else:
@@ -297,6 +312,13 @@ class PackageAPI(Resource):
                 'required': False,
                 'dataType': 'string',
                 'paramType': 'form'
+            },
+            {
+                'name': 'channel',
+                'description': '渠道名称',
+                'required': False,
+                'dataType': 'string',
+                'paramType': 'form'
             }
         ])
     def put(self):
@@ -312,6 +334,12 @@ class PackageAPI(Resource):
             package.fid = args["fid"]
         if args["update_level"]:
             package.update_level = args["update_level"]
+        if args['channel']:
+            package.channel = args['channel']
+        if args['channel'] and not Channel.query.filter_by(project_id=args['project_id'], name=args['channel']).first():
+            channel = Channel(args['project_id'], args['channel'])
+            db.session.add(channel)
+            db.session.commit()
         if args["public_status"]:
             # 这段代码你可能看不懂，但是就应该这么写
             package.public_status = args["public_status"]

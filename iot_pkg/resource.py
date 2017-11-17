@@ -2,7 +2,7 @@
 
 
 from iot_pkg.core import create_api
-from iot_pkg.resources import user, file, proj, pkg
+from iot_pkg.resources import user, file, proj, pkg, channel
 
 
 def add_resource():
@@ -22,3 +22,6 @@ def add_resource():
     api.add_resource(pkg.PackageAPI, "/api/package")
     api.add_resource(pkg.PackageListAPI, "/api/package/list")
     api.add_resource(pkg.PackageFileAPI, "/api/package/file", "/api/package/file/<fid>", endpoint='package_download')
+    # 项目渠道创建、修改、删除接口
+    api.add_resource(channel.ChannleListAPI, '/api/channel/list')
+    api.add_resource(channel.ChannelAPI, '/api/channel')

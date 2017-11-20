@@ -28,6 +28,7 @@ class PackageListAPI(Resource):
 
     get_parser = page_parser.copy()
     get_parser.add_argument("project_id", type=int, required=True)
+    get_parser.add_argument('channel', type=str, required=False)
 
     @swagger.operation(
         notes='获取安装包列表',
@@ -46,6 +47,13 @@ class PackageListAPI(Resource):
                 'description': '项目ID',
                 'required': True,
                 'dataType': 'integer',
+                'paramType': 'query'
+            },
+            {
+                'name': 'channel',
+                'description': '渠道名称',
+                'required': False,
+                'dataType': 'string',
                 'paramType': 'query'
             },
             {
@@ -71,6 +79,8 @@ class PackageListAPI(Resource):
         project_data["today_download"] = DayCounter.get_counter(cid=project.uid).number
         project_data["total_download"] = DayCounter.get_counters(cid=project.uid).with_entities(db.func.sum(DayCounter.number)).one()[0]
         packages = project.pkgs.order_by(Package.build_code.desc())
+        if args['channel']:
+            packages = packages.filter_by(channel=unicode(args['channel']))
         paginate = packages.paginate(args["page"], per_page=args["per_page"])
         data = {
             "page": paginate.page, 
@@ -94,7 +104,7 @@ class PackageAPI(Resource):
     post_parser.add_argument("project_id", type=int, required=True)
     post_parser.add_argument("fid", required=True)
     post_parser.add_argument("version_name", required=True)
-    post_parser.add_argument("build_code", required=True)
+    post_parser.add_argument("build_code", required=True, type=int)
     post_parser.add_argument("update_level", required=False)
     post_parser.add_argument("update_content", required=False)
     post_parser.add_argument("dependent_pkgs", required=False)
@@ -104,7 +114,7 @@ class PackageAPI(Resource):
     put_parser.add_argument("package_id", type=int, required=True)
     put_parser.add_argument("fid", required=False)
     put_parser.add_argument("version_name", required=False)
-    put_parser.add_argument("build_code", required=False)
+    put_parser.add_argument("build_code", required=False, type=int)
     put_parser.add_argument("update_level", required=False)
     put_parser.add_argument("update_content", required=False, default="")
     put_parser.add_argument("dependent_pkgs", required=False)
@@ -171,7 +181,7 @@ class PackageAPI(Resource):
                 'name': 'build_code',
                 'description': 'build号',
                 'required': True,
-                'dataType': 'string',
+                'dataType': 'int',
                 'paramType': 'form'
             },
             {
@@ -222,7 +232,7 @@ class PackageAPI(Resource):
         package.update_content = args["update_content"]
         package.channel = args['channel']
         if args['channel'] and not Channel.query.filter_by(project_id=args['project_id'], name=args['channel']).first():
-            channel = Channel(args['project_id'], args['channel'])
+            channel = Channel(args['channel'], args['project_id'])
             db.session.add(channel)
             db.session.commit()
         if project.is_auto_publish == Project.AUTO_PUBLISH:
@@ -336,8 +346,8 @@ class PackageAPI(Resource):
             package.update_level = args["update_level"]
         if args['channel']:
             package.channel = args['channel']
-        if args['channel'] and not Channel.query.filter_by(project_id=args['project_id'], name=args['channel']).first():
-            channel = Channel(args['project_id'], args['channel'])
+        if args['channel'] and not Channel.query.filter_by(project_id=package.project_id, name=args['channel']).first():
+            channel = Channel(args['channel'], args['project_id'])
             db.session.add(channel)
             db.session.commit()
         if args["public_status"]:

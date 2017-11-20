@@ -141,7 +141,7 @@ class ChannelAPI(Resource):
     def post(self):
         args = self.post_parser.parse_args()
         project_id = args['project_id']
-        channel_name = args['name']
+        channel_name = unicode(args["name"])
         channel = Channel.query.filter_by(project_id=project_id, name=channel_name).first()
         if channel:
             return {"code": '400', 'msg': '同一项目存在同名渠道，新增项目渠道失败'}
@@ -181,7 +181,7 @@ class ChannelAPI(Resource):
     def put(self):
         args = self.put_parser.parse_args()
         channel_id = args['channel_id']
-        channel_name = args['name']
+        channel_name = unicode(args["name"])
         channel = Channel.query.filter_by(id=channel_id).first_or_404()
         if Channel.query.filter_by(project_id=channel.project_id, name=channel_name).first():
             return {"code": '400', 'msg': '同一项目存在同名渠道，修改项目渠道失败'}

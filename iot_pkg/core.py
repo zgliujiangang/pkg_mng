@@ -13,6 +13,7 @@ from iot_pkg.utils.cache import memoize, PickleCache
 def create_app():
     app = Flask(__name__)
     app.secret_key = settings.SECRET_KEY
+
     @app.before_request
     def before_request():
         referer = request.headers.get('Referer')
@@ -21,6 +22,7 @@ def create_app():
             settings.DOMAIN = 'https://update.useonline.cn'
         else:
             settings.DOMAIN = 'http://update.useonline.cn'
+
     @app.after_request
     def after_request(response):
         response.headers.add('Access-Control-Allow-Origin', settings.ACCESS_CONTROL)

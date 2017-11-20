@@ -17,3 +17,4 @@ CACHE_PATH = None
 
 # 用户存放上传文件的路径，需重写
 FILE_PATH = None
+DOMAIN = ''

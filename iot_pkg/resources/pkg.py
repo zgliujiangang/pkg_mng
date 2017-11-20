@@ -74,13 +74,11 @@ class PackageListAPI(Resource):
     def get(self):
         args = self.get_parser.parse_args()
         project_id = args["project_id"]
+        channel = unicode(args['channel']) if args['channel'] else ''
         project = Project.query.filter_by(id=project_id, owner=request.user).first_or_404()
         packages = project.pkgs.order_by(Package.build_code.desc())
-        if args['channel']:
-            project_data = project.to_dict(channel=unicode(args['channel']))
-            packages = packages.filter_by(channel=unicode(args['channel']))
-        else:
-            project_data = project.to_dict()
+        project_data = project.to_dict(channel=channel)
+        packages = packages.filter_by(channel=channel)
         project_data["today_download"] = DayCounter.get_counter(cid=project.uid).number
         project_data["total_download"] = DayCounter.get_counters(cid=project.uid).with_entities(db.func.sum(DayCounter.number)).one()[0]
         paginate = packages.paginate(args["page"], per_page=args["per_page"])
@@ -224,6 +222,7 @@ class PackageAPI(Resource):
         ])
     def post(self):
         args = self.post_parser.parse_args()
+        channel = unicode(args['channel']) if args['channel'] else ''
         project = Project.query.filter_by(id=args["project_id"], owner=request.user).first_or_404()
         package = Package()
         package.version_name = args["version_name"]
@@ -232,9 +231,9 @@ class PackageAPI(Resource):
         package.project_id = args["project_id"]
         package.update_level = args["update_level"]
         package.update_content = args["update_content"]
-        package.channel = args['channel']
-        if args['channel'] and not Channel.query.filter_by(project_id=args['project_id'], name=args['channel']).first():
-            channel = Channel(args['channel'], args['project_id'])
+        package.channel = channel
+        if channel and not Channel.query.filter_by(project_id=args['project_id'], name=channel).first():
+            channel = Channel(channel, args['project_id'])
             db.session.add(channel)
             db.session.commit()
         if project.is_auto_publish == Project.AUTO_PUBLISH:
@@ -245,7 +244,7 @@ class PackageAPI(Resource):
             db.session.add(package)
             db.session.commit()
         except IntegrityError:
-            return {'code': '400', 'msg': '该项目下已存在相同build号的安装包'}
+            return {'code': '400', 'msg': '该项目下已存在相同build号和渠道的安装包'}
         try:
             dependent_pkgs = json.loads(args["dependent_pkgs"])
             for pkg in dependent_pkgs:
@@ -337,6 +336,7 @@ class PackageAPI(Resource):
         args = self.put_parser.parse_args()
         package_id = args["package_id"]
         package = Package.query.filter_by(id=package_id).join(Project, Package.project_id==Project.id).filter(Project.owner==request.user).first_or_404()
+        channel = unicode(args['channel']) if args['channel'] else ''
         if args["version_name"]:
             package.version_name = args["version_name"]
         if args["build_code"]:
@@ -346,10 +346,9 @@ class PackageAPI(Resource):
             package.fid = args["fid"]
         if args["update_level"]:
             package.update_level = args["update_level"]
-        if args['channel']:
-            package.channel = args['channel']
-        if args['channel'] and not Channel.query.filter_by(project_id=package.project_id, name=args['channel']).first():
-            channel = Channel(args['channel'], package.project_id)
+        package.channel = channel
+        if channel and not Channel.query.filter_by(project_id=package.project_id, name=channel).first():
+            channel = Channel(channel, package.project_id)
             db.session.add(channel)
             db.session.commit()
         if args["public_status"]:
@@ -369,7 +368,10 @@ class PackageAPI(Resource):
                     db.session.commit()
             except Exception as e:
                 print e
-        db.session.commit()
+        try:
+            db.session.commit()
+        except IntegrityError:
+            return {'code': '400', 'msg': '该项目下已存在相同build号和渠道的安装包'}
         data = {"package": package.to_dict()}
         return {"code": "200", "msg": "修改安装包信息成功", "data": data}
 

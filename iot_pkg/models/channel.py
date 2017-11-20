@@ -14,7 +14,7 @@ class Channel(db.Model):
     project_id = db.Column(db.Integer, db.ForeignKey("pkg_project.id"), nullable=False)
     project = db.relationship("Project", backref=db.backref("channels", lazy="dynamic"))
     create_time = db.Column(db.DateTime, default=datetime.now)
-    # update_time = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
+    update_time = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
 
     def __init__(self, name, project_id):
         self.name = name

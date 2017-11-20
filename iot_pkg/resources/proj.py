@@ -362,14 +362,11 @@ class ProjectMsgAPI(Resource):
         ])
     def get(self, uid):
         args = self.get_parser.parse_args()
-        channel = args['channel']
+        channel = unicode(args['channel']) if args['channel'] else ''
         project = Project.query.filter_by(uid=uid).first_or_404()
-        data = {"project": project.to_dict()}
-        if channel:
-            packages = project.pkgs.filter_by(public_status=Package.public_on,
-                                              channel=unicode(channel)).order_by(Package.build_code.desc())
-        else:
-            packages = project.pkgs.filter_by(public_status=Package.public_on).order_by(Package.build_code.desc())
+        data = {"project": project.to_dict(channel=channel)}
+        packages = project.pkgs.filter_by(public_status=Package.public_on,
+                                          channel=channel).order_by(Package.build_code.desc())
         latest_package = None
         for pkg in packages:
             dpt_pkgs = pkg.dependents
@@ -399,13 +396,10 @@ class ProjectFileAPI(Resource):
 
     def get(self, uid):
         args = self.get_parser.parse_args()
-        channel = args['channel']
+        channel = unicode(args['channel']) if args['channel'] else ''
         project = Project.query.filter_by(uid=uid).first_or_404()
-        if channel:
-            packages = project.pkgs.filter_by(public_status=Package.public_on,
-                                              channel=channel).order_by(Package.build_code.desc())
-        else:
-            packages = project.pkgs.filter_by(public_status=Package.public_on).order_by(Package.build_code.desc())
+        packages = project.pkgs.filter_by(public_status=Package.public_on,
+                                          channel=channel).order_by(Package.build_code.desc())
         latest_package = None
         for pkg in packages:
             dpt_pkgs = pkg.dependents

@@ -351,6 +351,13 @@ class ProjectMsgAPI(Resource):
                 'required': True,
                 'dataType': 'string',
                 'paramType': 'path'
+            },
+            {
+                'name': 'channel',
+                'description': '渠道名称',
+                'required': False,
+                'dataType': 'string',
+                'paramType': 'query'
             }
         ])
     def get(self, uid):
@@ -360,7 +367,7 @@ class ProjectMsgAPI(Resource):
         data = {"project": project.to_dict()}
         if channel:
             packages = project.pkgs.filter_by(public_status=Package.public_on,
-                                              channel=channel).order_by(Package.build_code.desc())
+                                              channel=unicode(channel)).order_by(Package.build_code.desc())
         else:
             packages = project.pkgs.filter_by(public_status=Package.public_on).order_by(Package.build_code.desc())
         latest_package = None

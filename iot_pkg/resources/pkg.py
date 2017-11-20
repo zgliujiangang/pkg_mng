@@ -75,12 +75,14 @@ class PackageListAPI(Resource):
         args = self.get_parser.parse_args()
         project_id = args["project_id"]
         project = Project.query.filter_by(id=project_id, owner=request.user).first_or_404()
-        project_data = project.to_dict()
-        project_data["today_download"] = DayCounter.get_counter(cid=project.uid).number
-        project_data["total_download"] = DayCounter.get_counters(cid=project.uid).with_entities(db.func.sum(DayCounter.number)).one()[0]
         packages = project.pkgs.order_by(Package.build_code.desc())
         if args['channel']:
+            project_data = project.to_dict(channel=unicode(args['channel']))
             packages = packages.filter_by(channel=unicode(args['channel']))
+        else:
+            project_data = project.to_dict()
+        project_data["today_download"] = DayCounter.get_counter(cid=project.uid).number
+        project_data["total_download"] = DayCounter.get_counters(cid=project.uid).with_entities(db.func.sum(DayCounter.number)).one()[0]
         paginate = packages.paginate(args["page"], per_page=args["per_page"])
         data = {
             "page": paginate.page, 
@@ -347,7 +349,7 @@ class PackageAPI(Resource):
         if args['channel']:
             package.channel = args['channel']
         if args['channel'] and not Channel.query.filter_by(project_id=package.project_id, name=args['channel']).first():
-            channel = Channel(args['channel'], args['project_id'])
+            channel = Channel(args['channel'], package.project_id)
             db.session.add(channel)
             db.session.commit()
         if args["public_status"]:

@@ -38,7 +38,7 @@ class Package(db.Model):
 
     __table_args__ = (
         # 相同项目一个版本只能有一条记录
-        db.UniqueConstraint("project_id", "build_code", name="unique_proj_build"),
+        db.UniqueConstraint("project_id", "build_code", 'channel', name="unique_proj_build_channel"),
         )
 
     def __init__(self, version_name=None, build_code=None, fid=None, project_id=None,

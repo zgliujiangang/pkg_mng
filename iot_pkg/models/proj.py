@@ -61,7 +61,13 @@ class Project(db.Model):
     def make_uid(self):
         return unicode(str(self.name) + '_' + get_random_string(3))
 
-    def to_dict(self):
+    def to_dict(self, channel=None):
+        if channel:
+            msg_url = settings.DOMAIN + url_unquote(url_for("project_msg", uid=self.uid, channel=channel))
+            download_url = settings.DOMAIN + url_unquote(url_for("project_download", uid=self.uid, channel=channel))
+        else:
+            msg_url = settings.DOMAIN + url_unquote(url_for("project_msg", uid=self.uid))
+            download_url = settings.DOMAIN + url_unquote(url_for("project_download", uid=self.uid))
         data = {
             "id": self.id,
             "uid": self.uid,
@@ -71,8 +77,8 @@ class Project(db.Model):
             "logo": self.logo,
             "auto_publish": self.is_auto_publish,
             "auto_publish_display": self.IS_AUTO_PUBLISH.get(self.is_auto_publish),
-            "msg_url": settings.DOMAIN + url_unquote(url_for("project_msg", uid=self.uid)),
-            "download_url": settings.DOMAIN + url_unquote(url_for("project_download", uid=self.uid))
+            "msg_url": msg_url,
+            "download_url": download_url
         }
         # data["today_download"] = DayCounter.get_counter(self.uid).number
         # data["total_download"] = DayCounter.get_counters(cid=self.uid).with_entities(db.func.sum(DayCounter.number)).one()[0]

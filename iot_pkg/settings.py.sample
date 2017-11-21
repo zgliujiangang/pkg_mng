@@ -5,12 +5,12 @@ from iot_pkg.conf.settings import *
 
 
 SQLALCHEMY_DATABASE_URI = "sqlite:///../data/pkg.db"
-USER_SESSION_TIMEOUT = 60 * 60 * 2
-CACHE_PATH = '/Users/admin/Project/iot_pkg/cache_dir'
-FILE_PATH = '/Users/admin/Project/iot_pkg/files'
+USER_SESSION_TIMEOUT = 60 * 60 * 10
+CACHE_PATH = '/home/exingcai/product/iot_pkg/cache_dir'
+FILE_PATH = '/home/exingcai/product/iot_pkg/file'
 DEFAULT_PAGE = 1
 PER_PAGE = 10
-SWAGGER_BASE_PATH = 'http://localhost:8000'
+SWAGGER_BASE_PATH = 'http://update.useonline.cn'
 ACCESS_CONTROL = '*'
 _DOMAIN = 'update.useonline.cn'
 # _DOMAIN = '172.16.84.27:9000'

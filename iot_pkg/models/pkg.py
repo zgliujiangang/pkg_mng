@@ -29,12 +29,12 @@ class Package(db.Model):
     fid = db.Column(db.String(50), nullable=False)
     project_id = db.Column(db.Integer, db.ForeignKey("pkg_project.id"), nullable=False)
     project = db.relationship("Project", backref=db.backref("pkgs", lazy="dynamic"))
-    channel = db.Column(db.String(20), default='')
     public_status = db.Column(db.Integer, default=public_off)
     update_level = db.Column(db.Integer, default=update_free)
     update_content = db.Column(db.Text)
     create_time = db.Column(db.DateTime, default=datetime.now)
     update_time = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
+    channel = db.Column(db.String(20), default='')
 
     __table_args__ = (
         # 相同项目一个版本只能有一条记录

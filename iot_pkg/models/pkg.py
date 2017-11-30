@@ -25,7 +25,7 @@ class Package(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     version_name = db.Column(db.String(20), nullable=False)
-    build_code = db.Column(db.String(20), nullable=False)
+    build_code = db.Column(db.Integer, nullable=False)
     fid = db.Column(db.String(50), nullable=False)
     project_id = db.Column(db.Integer, db.ForeignKey("pkg_project.id"), nullable=False)
     project = db.relationship("Project", backref=db.backref("pkgs", lazy="dynamic"))

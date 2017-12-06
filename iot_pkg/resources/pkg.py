@@ -346,11 +346,12 @@ class PackageAPI(Resource):
             package.fid = args["fid"]
         if args["update_level"]:
             package.update_level = args["update_level"]
-        package.channel = channel
-        if channel and not Channel.query.filter_by(project_id=package.project_id, name=channel).first():
-            channel = Channel(channel, package.project_id)
-            db.session.add(channel)
-            db.session.commit()
+        if channel:
+            package.channel = channel
+            if not Channel.query.filter_by(project_id=package.project_id, name=channel).first():
+                channel = Channel(channel, package.project_id)
+                db.session.add(channel)
+                db.session.commit()
         if args["public_status"]:
             # 这段代码你可能看不懂，但是就应该这么写
             package.public_status = args["public_status"]

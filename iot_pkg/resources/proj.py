@@ -330,6 +330,8 @@ class ProjectAPI(Resource):
         for pkg in project.pkgs:
             pkg.dependents.delete()
             db.session.delete(pkg)
+        for channel in project.channels:
+            db.session.delete(channel)
         db.session.delete(project)
         db.session.commit()
         return {"code": "200", "msg": "删除项目成功"}

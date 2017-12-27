@@ -10,8 +10,6 @@
         5. 浏览器访问 127.0.0.1:5000
         6. 更多功能可查看manage.py
 ### 提示
-        1、运行此服务需要本地安装aapt，并且将aapt加入环境变量中
-### 代码
         1.iot_pkg/models里面包含了User(用户),Project(项目),Package(安装包),Channel(渠道),Counter(访问计数器)的数据库映射模型
         2.iot_pkg/resource.py里面包含了系统所有的url
         3.iot_pkg/resources/里面是系统业务处理层(view),包含了用户的增删查改、项目的增删查改、渠道的增删查改、安装包的增删查改、文件的上传功能
@@ -24,3 +22,4 @@
         10.线上部署方式：gunicorn + flask
         11.线上启动命令行：/home/exingcai/.Envs/iot_pkg/bin/python2 /home/exingcai/.Envs/iot_pkg/bin/gunicorn -c gunicorn.py wsgi:application
         12.swagger地址: /api/doc.html
+        13、运行此服务需要本地安装aapt，并且将aapt加入环境变量中(aapt用于apk解析)

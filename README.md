@@ -23,3 +23,4 @@
         9.线上部署服务器：139.224.0.207
         10.线上部署方式：gunicorn + flask
         11.线上启动命令行：/home/exingcai/.Envs/iot_pkg/bin/python2 /home/exingcai/.Envs/iot_pkg/bin/gunicorn -c gunicorn.py wsgi:application
+        12.swagger地址: /api/doc.html
